@@ -1,37 +1,36 @@
-# PyWebApp Framework 🚀💎
+# PyWebApp Native 🚀💎
 
 **Lead Architect:** Sonu Vishwakarma (`sonuportfolio77@gmail.com`)
 
-PyWebApp is a high-performance, ultra-scalable cross-platform development platform. It combines the power of **Python** (for logic and data) with **React** (for stunning UIs) to create native Android and Desktop applications.
+PyWebApp Native is a high-performance, ultra-scalable cross-platform development platform. It combines the power of **Python** (for logic and data) with **React** (for stunning UIs) to create native Android, Desktop, and Web applications.
 
 ---
 
 ## 🔥 Key Elite Features
-- **🚀 Master Hub Architecture:** A universal bridge that allows Python/JS to trigger ANY Android feature (Camera, Files, GPS) without touching Kotlin.
-- **⚡ Smart Downscaling Engine:** Handles 4K images instantly by auto-resizing in the native layer before processing.
-- **🐧 Universal Cross-Platform:** One codebase for Android, Linux Desktop, and Windows Desktop.
-- **🛡️ Binary Hardening:** Pre-configured ProGuard/R8 rules for production-ready, secure binaries.
-- **🎨 Zero-Network Fonts:** Bundled assets for instant, offline-first UI rendering.
-- **🏎️ GPU Accelerated:** Full hardware acceleration enabled for smooth, lag-free animations.
+- **🚀 Master Hub Architecture:** A universal hardware bridge that allows Python/JS to trigger ANY feature (Camera, Files, GPS) across Android, Windows, and Web.
+- **🌐 Single-File Web Engine:** Generates standalone web builds that work directly from the file system without CORS issues.
+- **🏎️ Quad-Platform Build System:** One command to generate APKs, EXEs, Linux binaries, and static web assets.
+- **🛡️ Production Hardened:** Pre-configured encoding shields and I/O safety for windowed desktop environments.
 
 ---
 
 ## 🛠️ Installation & Quick Start
 
 ```bash
-# 1. Clone your project
-git clone https://github.com/your-username/pywebapp.git
-cd pywebapp
+# 1. Install the Elite Framework globally
+pip install pywebapp-native
 
-# 2. Install the framework globally
-pip install .
+# 2. Create your new masterpiece
+pywebapp init MyProject
+cd MyProject
 
-# 3. Create a new project
-pywebapp init my-new-app
-cd my-new-app
-
-# 4. Launch Development Server
+# 3. Launch Development Server (with Hot-Reload)
 pywebapp dev
+
+# 4. Build for your target platform
+pywebapp build-android    # Generates Signed APK
+pywebapp build-desktop    # Generates Windows EXE
+pywebapp build-web        # Generates CORS-free Web Site
 ```
 
 ---

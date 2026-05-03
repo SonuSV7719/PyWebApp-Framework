@@ -1,0 +1,14 @@
+LICENSE
+README.md
+pyproject.toml
+pywebapp/__init__.py
+pywebapp/cli.py
+pywebapp_elite.egg-info/PKG-INFO
+pywebapp_elite.egg-info/SOURCES.txt
+pywebapp_elite.egg-info/dependency_links.txt
+pywebapp_elite.egg-info/entry_points.txt
+pywebapp_elite.egg-info/requires.txt
+pywebapp_elite.egg-info/top_level.txt
+tests/test_api.py
+tests/test_bridge.py
+tests/test_handlers.py
