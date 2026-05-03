@@ -20,7 +20,7 @@ def build_frontend():
 
 def init_project(name):
     print(f"\n🌟 Creating new PyWebApp project: {name}...")
-    repo_url = "https://github.com/SonuVishwakarma/pywebapp.git" # Replace with your actual repo URL
+    repo_url = "https://github.com/SonuSV7719/PyWebApp-Framework.git"
     try:
         subprocess.run(["git", "clone", repo_url, name], check=True)
         print(f"✅ Project '{name}' created successfully!")
