@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { call, getPlatform, pickImage, showToast, getBase64FromUri, pickFile, launchIntent } from './bridge';
+import { call, getPlatform, pickImage, showToast, getBase64FromUri, pickFile, openCamera } from './bridge';
 import ResultCard from './components/ResultCard';
 
 export default function App() {
@@ -202,9 +202,11 @@ export default function App() {
 
   const handleCamera = useCallback(async () => {
     try {
-      // Use God Mode to launch the Camera!
-      await launchIntent('android.media.action.IMAGE_CAPTURE');
-      showToast('Camera launched! 📸');
+      const result = await openCamera();
+      if (result.success) {
+        showToast('Camera accessed successfully! 📸');
+        if (result.uri) setSelectedImage(result.uri);
+      }
     } catch (err) {
       showToast('Error launching camera: ' + err.message);
     }

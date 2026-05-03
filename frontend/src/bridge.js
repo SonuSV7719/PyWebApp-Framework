@@ -349,8 +349,52 @@ export async function pickFile() {
   } else if (platform === 'desktop') {
     const jsonResult = await window.pywebview.api.pickFile("Select File", ["All files (*.*)"]);
     return JSON.parse(jsonResult);
+  } else if (platform === 'web' || platform === 'dev') {
+    return new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) resolve({ success: true, uri: URL.createObjectURL(file), name: file.name });
+        else resolve({ success: false, error: 'Cancelled' });
+      };
+      input.click();
+    });
   }
   return Promise.reject(new Error('File picking not supported on this platform'));
+}
+
+/**
+ * Utility: Open the Native Camera (Universal).
+ */
+export async function openCamera() {
+  const platform = detectPlatform();
+  
+  if (platform === 'android') {
+    return launchIntent('android.media.action.IMAGE_CAPTURE');
+  } else {
+    // 🌐 WEB/DESKTOP DRIVER: Use standard MediaDevices
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // We stop it immediately just to verify access, or you can route this to a UI
+      stream.getTracks().forEach(track => track.stop());
+      return { success: true, mode: 'stream_verified' };
+    } catch (err) {
+      // Fallback: Trigger file input with camera preference
+      return new Promise((resolve) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.capture = 'environment';
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) resolve({ success: true, uri: URL.createObjectURL(file) });
+          else resolve({ success: false, error: 'Cancelled' });
+        };
+        input.click();
+      });
+    }
+  }
 }
 
 /**
