@@ -1,210 +1,69 @@
-# Scaling Your App
+# 🚀 Scaling & Development Guide
 
-PyWebApp is designed as a framework foundation. Here's how to scale it from a demo to a production application.
+One of the greatest strengths of PyWebApp Native is its **Infinite Scalability**. You can add thousands of features without ever touching the native "Plumbing."
 
-## Scaling the Backend
+---
 
-### Multi-Module Handlers
+## 🐍 Adding New Python Methods (Backend)
 
-Split handlers by domain:
+To add a new feature, you never need to modify the Android Kotlin code or the Desktop C++ code. You only work in Python.
 
-```
-backend/
-├── handlers/
-│   ├── __init__.py
-│   ├── auth.py          # @register(namespace="auth")
-│   ├── storage.py       # @register(namespace="storage")
-│   ├── ml.py            # @register(namespace="ml")
-│   └── settings.py      # @register(namespace="settings")
-├── services/
-│   ├── database.py      # Data layer
-│   └── cache.py         # Caching layer
-├── api.py
-├── registry.py
-└── logger.py
-```
+### 1. Simple Registration
+Open `backend/handlers.py` and use the `@register` decorator:
 
 ```python
-# backend/handlers/auth.py
-from ..registry import register
-
-@register(namespace="auth", description="Login with credentials")
-def login(username: str, password: str) -> dict:
-    # ... authentication logic
-    return {"token": "...", "user": username}
-
-@register(namespace="auth", description="Validate session token")
-def validate(token: str) -> dict:
-    # ... token validation
-    return {"valid": True, "user": "..."}
+@register("get_user_data")
+def get_user_data(params):
+    user_id = params.get("id")
+    # Fetch from database or API
+    return {"name": "Sonu", "role": "Lead Architect"}
 ```
+
+### 2. Organizing into Modules
+As your app grows, don't put everything in one file. Create new Python modules!
+- Create `backend/database.py`
+- Create `backend/auth.py`
+- **Important:** Just make sure you import these files in your main entry point so the `@register` decorators are executed.
+
+---
+
+## ⚛️ Calling Methods from React (Frontend)
+
+Once you've added the Python method, calling it from React is a one-liner:
 
 ```javascript
-// Frontend
-await call('auth.login', ['admin', 'password123']);
-await call('auth.validate', ['token_abc']);
+import { call } from './bridge';
+
+const loadUser = async () => {
+    // The method name MUST match the string in @register("...")
+    const { result } = await call("get_user_data", { id: 123 });
+    console.log(result.name);
+};
 ```
 
-### Adding Middleware
+---
 
-Use middleware for cross-cutting concerns:
+## 🛡️ The "Thin Bridge" Philosophy (What NOT to change)
 
-```python
-from backend.registry import method_registry
+To keep your app stable and easy to update, follow the **"Don't Touch the Plumbing"** rule:
 
-# Logging middleware
-def log_middleware(method, params):
-    print(f"[IPC] {method}({params})")
+### ❌ Do NOT Modify (Unless you are an expert):
+- **`frontend/src/bridge.js`**: This is already optimized for all platforms.
+- **`android/.../PythonBridge.kt`**: This is the native bridge. It is designed to be "invisible."
+- **`scripts/`**: These handle the complex building and signing logic.
 
-# Timing middleware
-import time
-def timing_middleware(method, params, result):
-    # result is the return value
-    print(f"[IPC] {method} completed")
+### ✅ DO Modify:
+- **`backend/`**: This is your playground! Add as much Python logic as you want.
+- **`frontend/src/`**: Build your beautiful UI here using React/Vite.
+- **`pywebapp.json`**: Use this to change your app's name and identity.
 
-# Auth middleware
-def auth_middleware(method, params):
-    if method.startswith("admin."):
-        # Check auth token (passed as last param or from context)
-        pass
+---
 
-method_registry.add_pre_middleware(log_middleware)
-method_registry.add_pre_middleware(auth_middleware)
-method_registry.add_post_middleware(timing_middleware)
-```
+## 📈 How to Scale
+1. **Add a Python function** + `@register`.
+2. **Call it from React** with `await call()`.
+3. **Build.**
+4. **Repeat.** 🚀
 
-### Database Integration
-
-```python
-# backend/services/database.py
-import sqlite3
-import os
-
-_db_path = None
-_connection = None
-
-def init_db(path: str):
-    global _db_path, _connection
-    _db_path = path
-    _connection = sqlite3.connect(path, check_same_thread=False)
-    _connection.row_factory = sqlite3.Row
-    return _connection
-
-def get_db():
-    return _connection
-```
-
-```python
-# backend/handlers/storage.py
-from ..registry import register
-from ..services.database import get_db
-
-@register(namespace="storage", description="Save a key-value pair")
-def save(key: str, value: str) -> dict:
-    db = get_db()
-    db.execute("INSERT OR REPLACE INTO kv (key, value) VALUES (?, ?)", (key, value))
-    db.commit()
-    return {"saved": True, "key": key}
-```
-
-## Scaling the Frontend
-
-### Adding Pages with React Router
-
-```jsx
-// Use HashRouter for WebView compatibility
-import { HashRouter, Routes, Route } from 'react-router-dom';
-
-function App() {
-  return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
-    </HashRouter>
-  );
-}
-```
-
-::: tip Use HashRouter, not BrowserRouter
-WebViews loading from `file://` protocol can't handle HTML5 history API. Always use `HashRouter` for client-side routing.
-:::
-
-### State Management
-
-For complex apps, add a state manager:
-
-```bash
-npm install zustand  # Lightweight, no boilerplate
-```
-
-```jsx
-import { create } from 'zustand';
-
-const useStore = create((set) => ({
-  user: null,
-  setUser: (user) => set({ user }),
-  results: {},
-  addResult: (method, result) => set((state) => ({
-    results: { ...state.results, [method]: result }
-  })),
-}));
-```
-
-## Scaling Architecture
-
-```mermaid
-graph TB
-    subgraph "Frontend (React)"
-        Router["HashRouter"]
-        Pages["Pages"]
-        Store["State (Zustand)"]
-        Bridge["bridge.js"]
-    end
-
-    subgraph "Backend (Python)"
-        API["Dispatcher"]
-        MW["Middleware Chain"]
-        subgraph "Namespaced Handlers"
-            Auth["auth.*"]
-            Data["data.*"]
-            ML["ml.*"]
-        end
-        subgraph "Services"
-            DB["Database"]
-            Cache["Cache"]
-            Queue["Task Queue"]
-        end
-    end
-
-    Router --> Pages
-    Pages --> Store
-    Pages --> Bridge
-    Bridge --> API
-    API --> MW
-    MW --> Auth
-    MW --> Data
-    MW --> ML
-    Auth --> DB
-    Data --> Cache
-    ML --> Queue
-```
-
-## Performance Optimization
-
-### Python Side
-- Use `lru_cache` for expensive computations
-- Process heavy work in background threads
-- Use connection pooling for databases
-
-### Frontend Side
-- Lazy-load pages with `React.lazy()`
-- Use `React.memo()` for expensive components
-- Debounce rapid IPC calls from UI
-
-### Bundle Size
-- Tree-shake unused dependencies
-- Use dynamic imports for large libraries
-- Analyze with `npx vite-bundle-visualizer`
+---
+[🏠 Back to Home](../)
