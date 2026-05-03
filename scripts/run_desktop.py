@@ -4,6 +4,7 @@ Allows running the same React/Python core as a Native Desktop App.
 Requires: pip install pywebview
 """
 import os
+import sys
 import webview
 import json
 from backend import api
