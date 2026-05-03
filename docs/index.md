@@ -3,7 +3,7 @@
 Welcome to the **PyWebApp Native** documentation. This framework is designed for high-performance, cross-platform application development.
 
 ### 🗺️ Explore the Framework
-[🚀 Quick Start](#-quick-start-30-seconds) | [📱 Android Guide](./android) | [💻 Desktop Guide](./desktop) | [💰 Licensing](#-licensing)
+[🚀 Quick Start](#-quick-start-30-seconds) | [⌨️ CLI Reference](./guide/cli) | [💰 Licensing](#-licensing)
 
 ---
 
