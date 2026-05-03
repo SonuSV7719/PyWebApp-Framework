@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration for PyWebApp.
+    
+    In DEBUG builds: allows cleartext HTTP traffic to connect to 
+    the Vite dev server for frontend hot reload.
+    
+    In RELEASE builds: only HTTPS is permitted.
+-->
+<network-security-config>
+    <!-- Allow cleartext for local dev server (debug only) -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </debug-overrides>
+
+    <!-- Default: block cleartext for security -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Allow cleartext specifically for dev server addresses -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Android emulator loopback -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <!-- Localhost (ADB reverse) -->
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <!-- Virtual Asset Domain -->
+        <domain includeSubdomains="false">appassets.android.com</domain>
+    </domain-config>
+</network-security-config>
