@@ -32,6 +32,35 @@ class DesktopBridge:
     def shareText(self, text):
         print(f"[SHARE]: {text}")
 
+    def pickFile(self, title, file_types):
+        """Native Desktop File Picker Driver"""
+        # pywebview provides a native file dialog
+        result = webview.active_window().create_file_dialog(
+            webview.OPEN_DIALOG, 
+            allow_multiple=False, 
+            file_types=file_types
+        )
+        if result:
+            return json.dumps({"success": True, "uri": result[0]})
+        return json.dumps({"success": False, "error": "User cancelled"})
+
+    def getBase64FromUri(self, uri):
+        """Native Desktop Image Reader Driver"""
+        import base64
+        try:
+            # On Desktop, the URI is just a local file path
+            path = uri.replace('file://', '')
+            if os.path.exists(path):
+                with open(path, "rb") as image_file:
+                    encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+                    # Detect mime type from extension
+                    ext = os.path.splitext(path)[1].lower()
+                    mime = "image/jpeg" if ext in ['.jpg', '.jpeg'] else "image/png"
+                    return json.dumps({"success": True, "base64": f"data:{mime};base64,{encoded_string}"})
+            return json.dumps({"success": False, "error": "File not found"})
+        except Exception as e:
+            return json.dumps({"success": False, "error": str(e)})
+
 def main():
     # Detect if we should use the Dev Server (Hot Reload) or static files
     is_dev = "--dev" in sys.argv

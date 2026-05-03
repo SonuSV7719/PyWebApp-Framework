@@ -302,26 +302,35 @@ export function requestPermission(permission) {
 }
 
 /**
- * Utility: Pick an image from the native gallery (Flicker-free).
+ * Utility: Pick an image from the native gallery (Universal).
  */
-export function pickImage() {
+export async function pickImage() {
   const platform = detectPlatform();
-  if (platform !== 'android') {
-    return Promise.reject(new Error('Image picking only available on Android'));
+  if (platform === 'android') {
+    return new Promise((resolve, reject) => {
+      const callbackId = `img_${++callbackIdCounter}`;
+      pendingCallbacks.set(callbackId, { resolve, reject });
+      window.NativeBridge.pickImage(callbackId);
+    });
+  } else if (platform === 'desktop') {
+    const jsonResult = await window.pywebview.api.pickFile("Select Image", ["Image Files (*.jpg;*.jpeg;*.png)", "All files (*.*)"]);
+    return JSON.parse(jsonResult);
   }
-
-  return new Promise((resolve, reject) => {
-    const callbackId = `img_${++callbackIdCounter}`;
-    pendingCallbacks.set(callbackId, { resolve, reject });
-    window.NativeBridge.pickImage(callbackId);
-  });
+  return Promise.reject(new Error('Image picking not supported on this platform'));
 }
 
 /**
- * Utility: Pick ANY file from the system (PDF, Zip, etc.).
+ * Utility: Pick ANY file from the system (Universal).
  */
-export function pickFile() {
-  return launchIntent('android.intent.action.GET_CONTENT', '*/*');
+export async function pickFile() {
+  const platform = detectPlatform();
+  if (platform === 'android') {
+    return launchIntent('android.intent.action.GET_CONTENT', '*/*');
+  } else if (platform === 'desktop') {
+    const jsonResult = await window.pywebview.api.pickFile("Select File", ["All files (*.*)"]);
+    return JSON.parse(jsonResult);
+  }
+  return Promise.reject(new Error('File picking not supported on this platform'));
 }
 
 /**
@@ -363,14 +372,19 @@ export function showToast(message) {
 }
 
 /**
- * Utility: Convert a native URI to Base64 (Internal use).
+ * Utility: Convert a native URI to Base64 (Universal).
  */
-export function getBase64FromUri(uri) {
-  if (detectPlatform() !== 'android') return Promise.resolve(uri);
-
-  return new Promise((resolve, reject) => {
-    const callbackId = `b64_${++callbackIdCounter}`;
-    pendingCallbacks.set(callbackId, { resolve, reject });
-    window.NativeBridge.getBase64FromUri(uri, callbackId);
-  });
+export async function getBase64FromUri(uri) {
+  const platform = detectPlatform();
+  if (platform === 'android') {
+    return new Promise((resolve, reject) => {
+      const callbackId = `b64_${++callbackIdCounter}`;
+      pendingCallbacks.set(callbackId, { resolve, reject });
+      window.NativeBridge.getBase64FromUri(uri, callbackId);
+    });
+  } else if (platform === 'desktop') {
+    const jsonResult = await window.pywebview.api.getBase64FromUri(uri);
+    return JSON.parse(jsonResult);
+  }
+  return { success: true, base64: uri }; // Fallback for dev/mock
 }
