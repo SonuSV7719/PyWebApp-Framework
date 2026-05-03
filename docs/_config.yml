@@ -1,0 +1,6 @@
+theme: jekyll-theme-cayman
+title: PyWebApp Native
+description: The High-Performance Cross-Platform Framework
+show_downloads: true
+google_analytics:
+# Add a custom sidebar if we want later
