@@ -21,12 +21,23 @@ def build_desktop():
     subprocess.run(['npm', 'install'], check=True, shell=True)
     subprocess.run(['npm', 'run', 'build'], check=True, shell=True)
 
-    # 2. Prepare PyInstaller Command
-    print("📦 Packaging with PyInstaller...")
+    # 2. Read Configuration
+    print("📖 Reading pywebapp.json...")
+    import json
+    config_path = os.path.join(PROJECT_ROOT, 'pywebapp.json')
+    app_name = "PyWebApp"
+    app_icon = None
+    
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            app_name = config.get("app_name", "PyWebApp")
+            app_icon = config.get("icon_path")
+
+    # 3. Prepare PyInstaller Command
+    print(f"📦 Packaging '{app_name}' with PyInstaller...")
     os.chdir(PROJECT_ROOT)
     
-    # We need to include the 'frontend/dist' folder as data
-    # and also include our 'backend' package
     dist_data = f"{DIST_DIR}{os.pathsep}frontend/dist"
     backend_data = f"backend{os.pathsep}backend"
     
@@ -37,9 +48,12 @@ def build_desktop():
         '--windowed',
         f'--add-data={dist_data}',
         f'--add-data={backend_data}',
-        '--name=PyWebApp',
+        f'--name={app_name}',
         'scripts/run_desktop.py'
     ]
+
+    if app_icon and os.path.exists(os.path.join(PROJECT_ROOT, app_icon)):
+        pyinstaller_cmd.append(f'--icon={app_icon}')
 
     try:
         subprocess.run(pyinstaller_cmd, check=True)

@@ -23,6 +23,38 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ANDROID_DIR = os.path.join(PROJECT_ROOT, "android")
 KEYSTORE_FILE = os.path.join(ANDROID_DIR, "pywebapp-release.keystore")
 PROPERTIES_FILE = os.path.join(ANDROID_DIR, "keystore.properties")
+STRINGS_XML = os.path.join(ANDROID_DIR, "app", "src", "main", "res", "values", "strings.xml")
+
+def update_android_branding():
+    """Update Android app name from pywebapp.json."""
+    config_path = os.path.join(PROJECT_ROOT, "pywebapp.json")
+    if not os.path.exists(config_path):
+        return
+    
+    import json
+    import re
+    
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        app_name = config.get("app_name")
+        if not app_name:
+            return
+
+    print(f"🏷️ Updating Android App Name to: {app_name}")
+    
+    if os.path.exists(STRINGS_XML):
+        with open(STRINGS_XML, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        # Replace the app_name string resource
+        new_content = re.sub(
+            r'(<string name="app_name">)(.*?)(</string>)',
+            rf'\1{app_name}\3',
+            content
+        )
+        
+        with open(STRINGS_XML, "w", encoding="utf-8") as f:
+            f.write(new_content)
 
 def generate_random_password(length=16):
     """Generate a random secure password."""
@@ -116,6 +148,9 @@ def main():
     print("🔄 Syncing Python & Frontend files...")
     sync_script = os.path.join(PROJECT_ROOT, "scripts", "build_android.py")
     subprocess.run([sys.executable, sync_script], check=True)
+
+    # Step 1.5: Update Branding (Name & Icon)
+    update_android_branding()
 
     # Step 2 & 3: Keystore setup
     password = args.password or generate_random_password()
