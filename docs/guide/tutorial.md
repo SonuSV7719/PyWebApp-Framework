@@ -9,8 +9,14 @@ In this tutorial, we will build a **Real-Time Camera Dashboard** using the PyWeb
 
 ---
 
-## 🛠️ Step 1: Initialize
-Run the command to scaffold your new masterpiece:
+## 🛠️ Step 1: Installation & Setup
+First, install the framework globally using `pip`. Note that while the package is named `pywebapp-native`, the CLI command you use is `pywebapp`.
+
+```bash
+pip install pywebapp-native
+```
+
+Then, run the command to scaffold your new masterpiece:
 ```bash
 pywebapp init CameraApp
 cd CameraApp
