@@ -13,16 +13,24 @@ export default defineConfig({
     ],
     sidebar: [
       {
-        text: 'Introduction',
+        text: 'Getting Started',
         items: [
           { text: 'Quick Start', link: '/' },
+          { text: 'Architecture', link: '/guide/architecture' }
         ]
       },
       {
-        text: 'Platforms',
+        text: 'Platform Guides',
         items: [
-          { text: 'Android Guide', link: '/android' },
-          { text: 'Desktop Guide', link: '/desktop' }
+          { text: 'Android (APK)', link: '/platforms/android' },
+          { text: 'Desktop (EXE)', link: '/platforms/desktop' }
+        ]
+      },
+      {
+        text: 'Reference',
+        items: [
+          { text: 'API Docs', link: '/api/' },
+          { text: 'Advanced Usage', link: '/advanced/' }
         ]
       }
     ],
