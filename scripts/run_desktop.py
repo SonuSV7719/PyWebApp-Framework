@@ -21,20 +21,27 @@ class DesktopBridge:
         print(f"[SHARE]: {text}")
 
 def main():
-    # Path to the frontend build
-    frontend_dist = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
-    index_html = os.path.join(frontend_dist, 'index.html')
-
-    if not os.path.exists(index_html):
-        print("❌ Error: Frontend build not found. Please run 'npm run build' in the frontend folder first.")
-        return
+    # Detect if we should use the Dev Server (Hot Reload) or static files
+    is_dev = "--dev" in sys.argv
+    
+    if is_dev:
+        url = "http://localhost:5173"
+        print(f"🔥 Hot-Reload Mode Active: Connecting to {url}")
+    else:
+        # Path to the frontend build
+        frontend_dist = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+        index_html = os.path.join(frontend_dist, 'index.html')
+        if not os.path.exists(index_html):
+            print("❌ Error: Frontend build not found. Please run 'pywebapp build-desktop' first.")
+            return
+        url = f'file://{index_html}'
 
     bridge = DesktopBridge()
     
     print("🚀 Launching PyWebApp Desktop...")
     window = webview.create_window(
         'PyWebApp Desktop', 
-        url=f'file://{index_html}',
+        url=url,
         js_api=bridge,
         width=1200,
         height=800

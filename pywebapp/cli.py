@@ -31,9 +31,15 @@ def init_project(name):
 def dev_server():
     print("\n🚀 Launching Development Environment...")
     frontend_dir = os.path.join(os.getcwd(), 'frontend')
-    # Start Vite in background and Python in foreground
+    # Start Vite in background (provides Hot Module Replacement)
     subprocess.Popen(["npm", "run", "dev"], cwd=frontend_dir, shell=True)
-    run_command([sys.executable, "scripts/run_desktop.py"])
+    
+    # Give Vite a second to start
+    import time
+    time.sleep(2)
+    
+    # Launch the Desktop window in Dev Mode
+    run_command([sys.executable, "scripts/run_desktop.py", "--dev"])
 
 def main():
     parser = argparse.ArgumentParser(description="PyWebApp Framework CLI")
