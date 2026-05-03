@@ -149,7 +149,8 @@ class PythonBridge(
         executor.execute {
             try {
                 val uri = android.net.Uri.parse(uriString)
-                val inputStream = context.contentResolver.openInputStream(uri)
+                // Open stream directly in decodeStream to avoid unused variable warning
+                // val inputStream = context.contentResolver.openInputStream(uri)
                 
                 // --- SMART DOWNSCALING ---
                 // Load dimensions first to avoid memory crash

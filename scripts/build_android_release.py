@@ -21,7 +21,7 @@ import random
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ANDROID_DIR = os.path.join(PROJECT_ROOT, "android")
-KEYSTORE_FILE = os.path.join(ANDROID_DIR, "pywebapp-release.keystore")
+KEYSTORE_FILE = os.path.join(ANDROID_DIR, "app", "pywebapp-release.keystore")
 PROPERTIES_FILE = os.path.join(ANDROID_DIR, "keystore.properties")
 STRINGS_XML = os.path.join(ANDROID_DIR, "app", "src", "main", "res", "values", "strings.xml")
 
