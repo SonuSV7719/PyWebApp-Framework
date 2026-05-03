@@ -17,6 +17,7 @@ export default withMermaid({
         items: [
           { text: 'Core Architecture', link: '/guide/architecture' },
           { text: 'GitHub Setup', link: '/guide/github-setup' },
+          { text: 'CLI Reference', link: '/guide/cli' },
           { text: 'Universal Bridge', link: '/api/' },
           { text: 'Advanced Internals', link: '/advanced/' }
         ]
