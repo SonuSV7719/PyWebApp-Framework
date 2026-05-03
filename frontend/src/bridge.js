@@ -315,6 +315,26 @@ export async function pickImage() {
   } else if (platform === 'desktop') {
     const jsonResult = await window.pywebview.api.pickFile("Select Image", ["Image Files (*.jpg;*.jpeg;*.png)", "All files (*.*)"]);
     return JSON.parse(jsonResult);
+  } else if (platform === 'web' || platform === 'dev') {
+    // 🌐 WEB DRIVER: Use standard HTML5 file input
+    return new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            resolve({ success: true, uri: event.target.result, isWeb: true });
+          };
+          reader.readAsDataURL(file);
+        } else {
+          resolve({ success: false, error: 'No file selected' });
+        }
+      };
+      input.click();
+    });
   }
   return Promise.reject(new Error('Image picking not supported on this platform'));
 }
