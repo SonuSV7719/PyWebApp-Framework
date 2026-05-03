@@ -80,6 +80,7 @@ const checkCamera = async () => {
 | **Android APK** | `pywebapp build-android` |
 | **Linux Binary** | `pywebapp build-linux` |
 | **Windows EXE** | `pywebapp build-desktop` |
+| **Web App** | `pywebapp build-web` |
 
 ---
 

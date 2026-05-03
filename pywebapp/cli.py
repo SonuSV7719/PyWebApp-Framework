@@ -43,7 +43,7 @@ def dev_server():
 
 def main():
     parser = argparse.ArgumentParser(description="PyWebApp Framework CLI")
-    parser.add_argument('command', choices=['init', 'dev', 'build-android', 'build-desktop', 'build-linux'], 
+    parser.add_argument('command', choices=['init', 'dev', 'build-android', 'build-desktop', 'build-linux', 'build-web'], 
                         help='Command to execute')
     parser.add_argument('name', nargs='?', help='Project name for init command')
     
@@ -57,6 +57,9 @@ def main():
             init_project(args.name)
         elif args.command == 'dev':
             dev_server()
+        elif args.command == 'build-web':
+            build_frontend()
+            print("\n🌐 Web build complete! Folder: frontend/dist")
         elif args.command == 'build-android':
             build_frontend()
             if sys.platform == "win32":
@@ -65,8 +68,12 @@ def main():
                 run_command("chmod +x scripts/build_android.sh && ./scripts/build_android.sh")
         elif args.command == 'build-desktop' or args.command == 'build-linux':
             build_frontend()
-            # Logic from build.py...
-            run_command([sys.executable, "scripts/build_desktop.py"])
+            if sys.platform == "win32":
+                run_command([sys.executable, "scripts/build_desktop.py"])
+            else:
+                print("\n🐧 Linux Desktop build detected...")
+                # Logic for Linux native build can be added here
+                run_command([sys.executable, "scripts/build_desktop.py"])
         
         print(f"\n✨ {args.command.capitalize()} completed successfully!")
     except Exception as e:
