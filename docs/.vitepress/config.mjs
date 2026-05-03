@@ -1,36 +1,31 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid({
   title: "PyWebApp Native",
   description: "High-Performance Cross-Platform Framework",
-  base: '/PyWebApp-Framework/', // Match your GitHub repo name
+  base: '/PyWebApp-Framework/',
   themeConfig: {
-    logo: '/logo.png',
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Guide', link: '/android' },
-      { text: 'Pip Package', link: 'https://pypi.org/project/pywebapp-native/' }
+      { text: 'Framework Docs', link: '/guide/architecture' },
+      { text: 'Build an App', link: '/guide/tutorial' }
     ],
     sidebar: [
       {
-        text: 'Getting Started',
+        text: '🏗️ The Framework (Pip)',
         items: [
-          { text: 'Quick Start', link: '/' },
-          { text: 'Architecture', link: '/guide/architecture' }
+          { text: 'Core Architecture', link: '/guide/architecture' },
+          { text: 'Universal Bridge', link: '/api/' },
+          { text: 'Advanced Internals', link: '/advanced/' }
         ]
       },
       {
-        text: 'Platform Guides',
+        text: '🚀 Build Your First App',
         items: [
-          { text: 'Android (APK)', link: '/platforms/android' },
-          { text: 'Desktop (EXE)', link: '/platforms/desktop' }
-        ]
-      },
-      {
-        text: 'Reference',
-        items: [
-          { text: 'API Docs', link: '/api/' },
-          { text: 'Advanced Usage', link: '/advanced/' }
+          { text: 'Getting Started', link: '/guide/tutorial' },
+          { text: 'Android Build', link: '/platforms/android' },
+          { text: 'Desktop Build', link: '/platforms/desktop' }
         ]
       }
     ],

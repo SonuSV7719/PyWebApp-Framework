@@ -137,15 +137,24 @@ sequenceDiagram
 
 **Key point:** Python runs on a **background thread** (thread pool of 4) to avoid blocking the Android UI thread. Results are posted back via `evaluateJavascript()`.
 
-## Directory Map
+## Repository Hierarchy
 
+This diagram shows how the different parts of the **PyWebApp-Framework** repository are organized:
+
+```mermaid
+graph TD
+    Root[PyWebApp-Framework] --> CLI[pywebapp/]
+    Root --> UI[frontend/]
+    Root --> LOGIC[backend/]
+    Root --> MOBILE[android/]
+    Root --> DOCS[docs/]
+    
+    CLI -->|"Command Line Interface"| Root
+    UI -->|"React UI Templates"| Root
+    LOGIC -->|"Python Handler Logic"| Root
+    MOBILE -->|"Kotlin Host Container"| Root
+    DOCS -->|"VitePress Site"| Root
 ```
-pywebapp/
-├── frontend/          ← Platform-agnostic React UI
-├── backend/           ← Platform-agnostic Python logic
-├── desktop/           ← Thin pywebview host
-├── android/           ← Thin Kotlin + Chaquopy host
-├── docs/              ← This documentation site
-├── scripts/           ← Build & dev tooling
-└── tests/             ← Python test suite
-```
+
+---
+[🏠 Back to Home](../)
