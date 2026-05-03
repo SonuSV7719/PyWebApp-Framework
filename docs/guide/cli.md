@@ -10,6 +10,7 @@ The `pywebapp` command-line tool is the heart of the framework. It handles every
 Scaffolds a brand new, production-ready project.
 - **Example:** `pywebapp init MyApp`
 - **What it does:** Creates the `frontend/`, `backend/`, and `android/` directories with all necessary configurations.
+- **Next Steps:** Navigate into `MyApp/frontend` and run `npm install` to download React dependencies.
 
 ### `pywebapp dev`
 Starts the high-performance development environment.

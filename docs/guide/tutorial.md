@@ -20,6 +20,11 @@ Then, run the command to scaffold your new masterpiece:
 ```bash
 pywebapp init CameraApp
 cd CameraApp
+
+# Install React dependencies
+cd frontend
+npm install
+cd ..
 ```
 
 ## 🏗️ Step 2: The Logic (Python)

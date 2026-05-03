@@ -19,6 +19,11 @@ pip install pywebapp-native
 ```bash
 pywebapp init MyNewApp
 cd MyNewApp
+
+# Install React dependencies
+cd frontend
+npm install
+cd ..
 ```
 
 ### 2. Run in Development Mode
