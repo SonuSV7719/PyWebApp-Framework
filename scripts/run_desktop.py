@@ -8,17 +8,32 @@ import sys
 import webview
 import json
 
+# 🛡️ ENCODING SHIELD: Prevent crashes on Windows when printing emojis
+if sys.platform == "win32":
+    try:
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    except Exception:
+        pass
+
 # 🏛️ PATH FIX: Ensure we can find the 'backend' folder
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if hasattr(sys, '_MEIPASS'):
+    # We are running inside a PyInstaller EXE
+    PROJECT_ROOT = sys._MEIPASS
+else:
+    # We are running in development
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 try:
     from backend import api
-    print("✅ Backend logic connected.")
+    print("Backend logic connected.")
 except ImportError as e:
-    print(f"❌ Critical Error: Could not load backend. {e}")
-    sys.exit(1)
+    print(f"Error: Could not load backend. {e}")
+    # Don't exit here, might be running without backend for some reason
 
 class DesktopBridge:
     def dispatch(self, method, params_json):
@@ -70,10 +85,14 @@ def main():
         print(f"🔥 Hot-Reload Mode Active: Connecting to {url}")
     else:
         # Path to the frontend build
-        frontend_dist = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+        if hasattr(sys, '_MEIPASS'):
+            frontend_dist = os.path.join(sys._MEIPASS, 'frontend', 'dist')
+        else:
+            frontend_dist = os.path.join(PROJECT_ROOT, 'frontend', 'dist')
+            
         index_html = os.path.join(frontend_dist, 'index.html')
         if not os.path.exists(index_html):
-            print("❌ Error: Frontend build not found. Please run 'pywebapp build-desktop' first.")
+            print("Error: Frontend build not found.")
             return
         url = f'file://{index_html}'
 

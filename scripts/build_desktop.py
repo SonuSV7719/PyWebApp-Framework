@@ -27,14 +27,16 @@ def build_desktop():
     
     # We need to include the 'frontend/dist' folder as data
     # and also include our 'backend' package
-    add_data_flag = f"{DIST_DIR}{os.pathsep}frontend/dist"
+    dist_data = f"{DIST_DIR}{os.pathsep}frontend/dist"
+    backend_data = f"backend{os.pathsep}backend"
     
     pyinstaller_cmd = [
         'pyinstaller',
         '--noconfirm',
         '--onefile',
         '--windowed',
-        f'--add-data={add_data_flag}',
+        f'--add-data={dist_data}',
+        f'--add-data={backend_data}',
         '--name=PyWebApp',
         'scripts/run_desktop.py'
     ]
