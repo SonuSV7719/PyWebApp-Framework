@@ -7,7 +7,18 @@ import os
 import sys
 import webview
 import json
-from backend import api
+
+# 🏛️ PATH FIX: Ensure we can find the 'backend' folder
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+try:
+    from backend import api
+    print("✅ Backend logic connected.")
+except ImportError as e:
+    print(f"❌ Critical Error: Could not load backend. {e}")
+    sys.exit(1)
 
 class DesktopBridge:
     def dispatch(self, method, params_json):
@@ -49,7 +60,7 @@ def main():
     )
     
     # Start the app
-    webview.start()
+    webview.start(debug=is_dev)
 
 if __name__ == '__main__':
     main()
