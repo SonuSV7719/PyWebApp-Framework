@@ -29,13 +29,15 @@ pywebapp dev
 
 ### 3. Build for Production
 When you are ready to ship, use the universal build commands:
-- **Android:** `pywebapp build-android`
-- **Windows:** `pywebapp build-desktop`
-- **Web:** `pywebapp build-web`
+- **Android APK:** `pywebapp build-android` (Generates Signed Release APK)
+- **Windows EXE:** `pywebapp build-desktop` (Generates Hardened Executable)
+- **Linux Binary:** `pywebapp build-linux` (Generates Portable Binary)
+- **Web App:** `pywebapp build-web` (Generates Single-File CORS-free Site)
 
 ---
 
-## 🏛️ Architecture Overview
+## 🏛️ Advanced: Contributing & Local Setup
+If you want to modify the framework itself or use the internal GitHub build scripts, check out our **[GitHub Contributor Guide](./guide/github-setup)**.
 PyWebApp uses a **Master Hub** system. 
 - **Frontend:** React + Vite (GPU Accelerated)
 - **Backend:** Python (Asynchronous Logic)

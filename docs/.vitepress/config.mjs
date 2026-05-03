@@ -16,6 +16,7 @@ export default withMermaid({
         text: '🏗️ The Framework (Pip)',
         items: [
           { text: 'Core Architecture', link: '/guide/architecture' },
+          { text: 'GitHub Setup', link: '/guide/github-setup' },
           { text: 'Universal Bridge', link: '/api/' },
           { text: 'Advanced Internals', link: '/advanced/' }
         ]
