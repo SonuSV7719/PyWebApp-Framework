@@ -9,13 +9,22 @@ import webview
 import json
 
 # 🛡️ ENCODING SHIELD: Prevent crashes on Windows when printing emojis
-if sys.platform == "win32":
+# Only run if stdout exists (it might be None in windowed mode)
+if sys.platform == "win32" and sys.stdout is not None:
     try:
         import io
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
     except Exception:
         pass
+
+def safe_print(msg):
+    """Prints only if stdout is available (Prevents EXE crashes)"""
+    if sys.stdout is not None:
+        try:
+            print(msg)
+        except Exception:
+            pass
 
 # 🏛️ PATH FIX: Ensure we can find the 'backend' folder
 if hasattr(sys, '_MEIPASS'):
@@ -30,9 +39,9 @@ if PROJECT_ROOT not in sys.path:
 
 try:
     from backend import api
-    print("Backend logic connected.")
+    safe_print("Backend logic connected.")
 except ImportError as e:
-    print(f"Error: Could not load backend. {e}")
+    safe_print(f"Error: Could not load backend. {e}")
     # Don't exit here, might be running without backend for some reason
 
 class DesktopBridge:
@@ -45,7 +54,7 @@ class DesktopBridge:
         print(f"[TOAST]: {message}")
 
     def shareText(self, text):
-        print(f"[SHARE]: {text}")
+        safe_print(f"[SHARE]: {text}")
 
     def pickFile(self, title, file_types):
         """Native Desktop File Picker Driver"""
@@ -82,7 +91,7 @@ def main():
     
     if is_dev:
         url = "http://localhost:5173"
-        print(f"🔥 Hot-Reload Mode Active: Connecting to {url}")
+        safe_print(f"🔥 Hot-Reload Mode Active: Connecting to {url}")
     else:
         # Path to the frontend build
         if hasattr(sys, '_MEIPASS'):
@@ -92,13 +101,13 @@ def main():
             
         index_html = os.path.join(frontend_dist, 'index.html')
         if not os.path.exists(index_html):
-            print("Error: Frontend build not found.")
+            safe_print("Error: Frontend build not found.")
             return
         url = f'file://{index_html}'
 
     bridge = DesktopBridge()
     
-    print("🚀 Launching PyWebApp Desktop...")
+    safe_print("🚀 Launching PyWebApp Desktop...")
     window = webview.create_window(
         'PyWebApp Desktop', 
         url=url,
