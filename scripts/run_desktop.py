@@ -103,7 +103,10 @@ def main():
         if not os.path.exists(index_html):
             safe_print("Error: Frontend build not found.")
             return
-        url = f'file://{index_html}'
+        
+        # 🚀 MASTER FIX: Point to the FOLDER, not the file.
+        # This tells pywebview to start a local server, bypassing CORS!
+        url = frontend_dist
 
     bridge = DesktopBridge()
     
