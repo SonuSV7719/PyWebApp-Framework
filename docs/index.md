@@ -7,6 +7,28 @@ Welcome to the **PyWebApp Native** documentation. This framework is designed for
 
 ---
 
+## 🌟 Why PyWebApp Native?
+
+PyWebApp Native is the **Elite Tier** of cross-platform development. We combine the world's most powerful logic language (**Python**) with the world's most beautiful UI engine (**React**).
+
+### 🚀 Core Features
+- **🏗️ Master Hub Architecture:** A decoupled system where Python handles the heavy lifting and React handles the visuals.
+- **📱 Native Android Support:** Built-in integration for mobile hardware, camera, and permissions.
+- **💻 Hardened Desktop Builds:** Compile to standalone, single-file executables for Windows and Linux.
+- **🌐 Zero-CORS Web:** Build single-file static sites that work flawlessly anywhere.
+- **⚙️ Branding Engine:** Centralized `pywebapp.json` for global name, version, and icon management.
+
+### 🏆 The Competitive Edge
+| Feature | PyWebApp Native | Electron | Flet / BeeWare |
+| :--- | :---: | :---: | :---: |
+| **Mobile Support** | ✅ Native Android | ❌ No | ⚠️ Complex |
+| **UI Performance** | ⚡ GPU Accelerated | ⚡ Good | 🐢 Average |
+| **Logic Language** | 🐍 Pure Python | 🟨 JavaScript | 🐍 Python |
+| **App Size** | 💎 Hardened & Slim | 📦 Large | ⚠️ Variable |
+| **Developer UX** | 🚀 Zero Boilerplate | 🛠️ Manual | 🛠️ Manual |
+
+---
+
 ## 🚀 Quick Start (30 Seconds)
 
 To start building apps with the Elite framework, run the following command in your terminal:
