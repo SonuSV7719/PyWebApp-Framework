@@ -25,7 +25,18 @@ For convenience, the bridge includes pre-built wrappers for Android intents:
 - `pickFile()`: Launches the system file picker.
 - `requestPermission(permissionString)`: Prompts the user for a native Android permission.
 
+### 🛠️ Modifying the Bridge (Advanced)
+You might wonder why `bridge.js` is placed directly in your `src/` folder instead of being hidden inside an `npm` package. This is a deliberate "Exposed Abstraction" design.
+
+**When should you modify it?**
+- You need to add a highly custom Android Intent (e.g., a specific Bluetooth Scanner or NFC reader).
+- You want to change how the framework handles timeout errors or loading states globally.
+
+**How to update it:**
+Because it is just a standard Javascript file, you can simply open `frontend/src/bridge.js` and add new export functions or modify the core `call()` Promise logic. Your changes will immediately take effect across all platforms without needing to fork the core framework!
+
 ---
+
 
 ## 🐍 The Python API (`handlers.py`)
 
