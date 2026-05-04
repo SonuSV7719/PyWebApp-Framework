@@ -8,57 +8,34 @@ Get PyWebApp running in under 5 minutes.
 - **Node.js 18+** with npm
 - **Android Studio** (for Android builds only)
 
-## Installation
-
-### 1. Clone the Repository
+### 1. Install the CLI Framework
 
 ```bash
-git clone https://github.com/your-org/pywebapp.git
-cd pywebapp
+pip install pywebapp-native
 ```
 
-### 2. Install Backend Dependencies
+### 2. Create a New Project
 
 ```bash
-cd desktop
-pip install -r requirements.txt
-cd ..
+pywebapp init MyApp
+cd MyApp
 ```
 
-### 3. Install Frontend Dependencies
-
-```bash
-cd frontend
-npm install
-cd ..
-```
-
-## Running the App
+*(This automatically installs the required npm dependencies, including the `pywebapp-bridge` library, and gives you a clean project template!)*
 
 ### Production Mode
 
 ```bash
-# Build the frontend
-cd frontend && npm run build && cd ..
-
-# Launch the desktop app
-cd desktop && python main.py
+# Build the frontend and launch desktop runner
+pywebapp build-desktop
 ```
 
 ### Development Mode (Recommended)
 
-Run two terminals for hot reload on both frontend and backend:
+Just run a single command! It automatically starts the Vite dev server for your React UI and enables hot-reloading for your Python backend:
 
-**Terminal 1 — Vite Dev Server (frontend HMR):**
 ```bash
-cd frontend
-npm run dev
-```
-
-**Terminal 2 — Desktop App with Hot Reload:**
-```bash
-cd desktop
-python main.py --dev --debug
+pywebapp dev
 ```
 
 Now you can:

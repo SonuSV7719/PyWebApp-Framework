@@ -43,19 +43,19 @@ const loadUser = async () => {
 
 ---
 
-## 🛡️ The "Thin Bridge" Philosophy (What NOT to change)
+## 📦 Library-Driven Abstraction
 
-To keep your app stable and easy to update, follow the **"Don't Touch the Plumbing"** rule:
+PyWebApp abstracts all the complex "plumbing" into two distributable libraries:
 
-### ❌ Do NOT Modify (Unless you are an expert):
-- **`frontend/src/bridge.js`**: This is already optimized for all platforms.
-- **`android/.../PythonBridge.kt`**: This is the native bridge. It is designed to be "invisible."
-- **`scripts/`**: These handle the complex building and signing logic.
+1. **`pywebapp-native` (pip)**: The Python engine. Contains the IPC dispatcher, Method Registry, CLI tool, build scripts, and the desktop runner.
+2. **`pywebapp-bridge` (npm)**: The cross-platform JavaScript IPC bridge.
 
-### ✅ DO Modify:
-- **`backend/`**: This is your playground! Add as much Python logic as you want.
-- **`frontend/src/`**: Build your beautiful UI here using React/Vite.
-- **`pywebapp.json`**: Use this to change your app's name and identity.
+Because of this architecture, your workspace remains incredibly clean. You only see your business logic (`backend/handlers.py`) and your UI (`frontend/src/App.jsx`).
+
+### ✅ What You Control:
+- **`backend/`**: Your playground! Add as much Python logic as you want across as many modules as you need. Just import them into `backend/__init__.py`.
+- **`frontend/`**: Build your beautiful UI here using React/Vite.
+- **`pywebapp.json`**: Configure your app's name, version, and identity globally.
 
 ---
 

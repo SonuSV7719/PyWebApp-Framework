@@ -137,23 +137,25 @@ sequenceDiagram
 
 **Key point:** Python runs on a **background thread** (thread pool of 4) to avoid blocking the Android UI thread. Results are posted back via `evaluateJavascript()`.
 
-## Repository Hierarchy
+## Package Architecture
 
-This diagram shows how the different parts of the **PyWebApp-Framework** repository are organized:
+This diagram shows how PyWebApp abstracts the complex framework logic into distributable packages, keeping your workspace clean:
 
 ```mermaid
 graph TD
-    Root[PyWebApp-Framework] --> CLI[pywebapp/]
-    Root --> UI[frontend/]
+    Root[Your App Workspace] --> UI[frontend/]
     Root --> LOGIC[backend/]
     Root --> MOBILE[android/]
-    Root --> DOCS[docs/]
+    Root --> CONFIG[pywebapp.json]
     
-    CLI -->|"Command Line Interface"| Root
-    UI -->|"React UI Templates"| Root
-    LOGIC -->|"Python Handler Logic"| Root
-    MOBILE -->|"Kotlin Host Container"| Root
-    DOCS -->|"VitePress Site"| Root
+    subgraph "External Libraries"
+        NPM[npm: pywebapp-bridge]
+        PIP[pip: pywebapp-native]
+    end
+    
+    UI -->|"imports call()"| NPM
+    LOGIC -->|"imports @register"| PIP
+    Root -->|"built by"| PIP
 ```
 
 ---
