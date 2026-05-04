@@ -30,6 +30,7 @@ export default withMermaid(
               { text: 'Getting Started', link: '/guide/getting-started' },
               { text: 'Architecture', link: '/guide/architecture' },
               { text: 'Tutorial: Counter App', link: '/guide/tutorial' },
+              { text: 'Licensing', link: '/guide/licensing' },
             ],
           },
           {
@@ -91,7 +92,7 @@ export default withMermaid(
 
       footer: {
         message: 'Released under the MIT License.',
-        copyright: 'Copyright © 2024 PyWebApp',
+        copyright: 'Copyright © 2026 Sonu Vishwakarma',
       },
     },
 

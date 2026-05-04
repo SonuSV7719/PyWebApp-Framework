@@ -20,7 +20,8 @@ export default withMermaid({
           { text: 'GitHub Setup', link: '/guide/github-setup' },
           { text: 'CLI Reference', link: '/guide/cli' },
           { text: 'Universal Bridge', link: '/api/' },
-          { text: 'Advanced Internals', link: '/advanced/' }
+          { text: 'Advanced Internals', link: '/advanced/' },
+          { text: 'Licensing', link: '/guide/licensing' }
         ]
       },
       {
@@ -40,7 +41,7 @@ export default withMermaid({
     ],
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2026-present Sonu Vishwakarma'
+      copyright: 'Copyright © 2026 Sonu Vishwakarma'
     }
   }
 })
