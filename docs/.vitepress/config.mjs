@@ -33,6 +33,7 @@ export default withMermaid({
         text: '🚀 Build Your First App',
         items: [
           { text: 'Getting Started', link: '/guide/tutorial' },
+          { text: 'Modular Architecture', link: '/guide/tutorial2' },
           { text: 'Scaling Your App', link: '/guide/scaling' },
           { text: 'App: Calculation App', link: '/guide/calculation-tutorial' },
           { text: 'Mastering Permissions', link: '/guide/permissions' },
