@@ -25,6 +25,7 @@ Starts the high-performance development environment.
 
 ### `pywebapp build-android`
 Generates a signed, production-ready APK for Android devices.
+- **Option:** `--password <your_password>` (Optional: Password for the auto-generated release keystore)
 - **Output:** `android/app/build/outputs/apk/release/app-release.apk`
 
 ### `pywebapp build-desktop`
