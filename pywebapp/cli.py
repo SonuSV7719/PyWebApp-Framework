@@ -26,7 +26,7 @@ def init_project(name):
         
         # Cleanup unnecessary folders
         project_path = os.path.join(os.getcwd(), name)
-        folders_to_remove = ['docs', 'tests']
+        folders_to_remove = ['docs', 'tests', 'pywebapp']
         
         import shutil
         for folder in folders_to_remove:
