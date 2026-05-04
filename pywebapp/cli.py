@@ -24,16 +24,23 @@ def init_project(name):
     try:
         subprocess.run(["git", "clone", repo_url, name], check=True)
         
-        # Cleanup unnecessary folders
+        # Cleanup unnecessary folders and files
         project_path = os.path.join(os.getcwd(), name)
         folders_to_remove = ['docs', 'tests', 'pywebapp']
+        files_to_remove = ['master_build.py', 'pyproject.toml', 'PyWebApp.spec']
         
         import shutil
         for folder in folders_to_remove:
             path = os.path.join(project_path, folder)
             if os.path.exists(path):
                 shutil.rmtree(path)
-                print(f"🧹 Removed {folder}/")
+                print(f"🧹 Removed folder: {folder}/")
+
+        for file in files_to_remove:
+            path = os.path.join(project_path, file)
+            if os.path.exists(path):
+                os.remove(path)
+                print(f"🧹 Removed file: {file}")
 
         # Remove egg-info if they exist
         for item in os.listdir(project_path):
