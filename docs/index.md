@@ -9,7 +9,7 @@ Welcome to the **PyWebApp Native** documentation. This framework is designed for
 
 ## 🌟 Why PyWebApp Native?
 
-PyWebApp Native is the **Elite Tier** of cross-platform development. Most Python GUI frameworks (like Kivy or Flet) force you to learn their specific DSLs or restrictive Python-based UI APIs. 
+PyWebApp Native is the **Elite Tier** of cross-platform development. Most traditional Python-based UI solutions require learning proprietary APIs or restrictive, non-standard design systems. 
 
 **PyWebApp Native is different.** We let you use the world's most powerful UI ecosystem (**React, Vue, Svelte, or Vanilla JS**) alongside the world's best logic language (**Python**).
 
@@ -51,17 +51,17 @@ PyWebApp Native is the **Elite Tier** of cross-platform development. Most Python
 - **🤖 Mobile:** Native Android builds via **Chaquopy** integration.
 
 ### 🏆 How we beat the competition
-| Feature | PyWebApp Native | Kivy / Flet | Electron |
+| Feature | PyWebApp Native | Other Frameworks | Standard Desktop Wrappers |
 | :--- | :---: | :---: | :---: |
-| **UI Ecosystem** | ⚛️ Full React/NPM | 🛠️ Custom / Limited | 🌐 Full Web |
+| **UI Ecosystem** | ⚛️ Full Web/NPM | 🛠️ Custom / Limited | 🌐 Full Web |
 | **Learning Curve** | 🧊 **Zero** | 📈 Steep (New APIs) | 🧊 Zero |
 | **Mobile Support** | ✅ Native Android | ⚠️ Complex / Finicky | ❌ No |
-| **Backend Power** | 🐍 Pure Python | 🐍 Python | 🟨 Node.js |
+| **Backend Power** | 🐍 Pure Python | 🐍 Python | 🟨 Runtime-Limited |
 | **App Size** | 💎 Hardened & Slim | 📦 Large | 🐘 Massive |
 | **Hot Reload** | 🔥 Instant | ⚠️ Partial | 🔥 Instant |
 
 ### 📊 Technical Benchmarks (Real-World)
-| Metric | PyWebApp Native | Electron | Traditional Python |
+| Metric | PyWebApp Native | Desktop Wrappers | Traditional Solutions |
 | :--- | :---: | :---: | :---: |
 | **Idle Memory Usage** | ~45 MB | ~180 MB | ~30 MB |
 | **Build Size (Hello World)** | ~28 MB | ~115 MB | ~15 MB |
