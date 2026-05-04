@@ -141,6 +141,46 @@ class PythonBridge(
     }
 
     /**
+     * UNIVERSAL UTILITY: Resolve an Android Scoped Storage URI into an absolute file path.
+     * This copies the selected file into the app's cache directory so Python can read it
+     * directly from the hard drive (bypassing Base64 JSON strings for massive files).
+     */
+    @JavascriptInterface
+    fun cacheUriToFile(uriString: String, callbackId: String) {
+        executor.execute {
+            try {
+                val uri = android.net.Uri.parse(uriString)
+                val inputStream = context.contentResolver.openInputStream(uri)
+                
+                // Try to get original file name
+                var fileName = "cached_file_" + System.currentTimeMillis()
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                        if (nameIndex != -1) {
+                            fileName = cursor.getString(nameIndex)
+                        }
+                    }
+                }
+                
+                val tempFile = java.io.File(context.cacheDir, fileName)
+                tempFile.outputStream().use { out ->
+                    inputStream?.copyTo(out)
+                }
+                
+                // Escape path for JSON
+                val escapedPath = escapeJson(tempFile.absolutePath)
+                val escapedName = escapeJson(fileName)
+                sendResultToJs(callbackId, """{"success":true,"path":"$escapedPath","uri":"$uriString","name":"$escapedName"}""")
+            } catch (e: Exception) {
+                Log.e(TAG, "Cache error", e)
+                val errorMsg = escapeJson(e.message ?: "Unknown error")
+                sendResultToJs(callbackId, """{"success":false,"error":"Failed to cache file: $errorMsg"}""")
+            }
+        }
+    }
+
+    /**
      * UNIVERSAL UTILITY: Convert any Android URI to Base64 for easy viewing in WebView.
      * This is the scalable way to handle images/files picked from the system.
      */
