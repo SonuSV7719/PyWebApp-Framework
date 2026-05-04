@@ -25,9 +25,38 @@ logger = get_logger("handlers")
 def add(a: Union[int, float], b: Union[int, float]) -> Union[int, float]:
     """Add two numbers together."""
     logger.info(f"add({a}, {b})")
-    result = a + b
-    logger.debug(f"add result: {result}")
-    return result
+    return a + b
+
+# ─── File Handling Example ───────────────────────────────────────
+
+@register(description="Process a massive file and delete it to save space")
+def process_file(file_path: str) -> Dict[str, Any]:
+    """
+    Example of handling gigabyte-sized files safely.
+    It reads the file natively and immediately deletes it from 
+    the Android cache to prevent running out of phone storage.
+    """
+    if not os.path.exists(file_path):
+        return {"success": False, "error": "File not found"}
+        
+    try:
+        # 1. Get file size natively (0ms latency, 0 RAM overhead)
+        size_mb = os.path.getsize(file_path) / (1024 * 1024)
+        logger.info(f"Processing file: {file_path} ({size_mb:.2f} MB)")
+        
+        # 2. (Insert your heavy ML or Video processing logic here)
+        
+        # 3. ALWAYS DELETE the file when done to save phone storage!
+        os.remove(file_path)
+        logger.info(f"Deleted temp file: {file_path}")
+        
+        return {
+            "success": True, 
+            "message": f"Successfully processed and deleted {size_mb:.2f} MB file!"
+        }
+    except Exception as e:
+        logger.error(f"Error processing file: {e}")
+        return {"success": False, "error": str(e)}
 
 
 @register(description="Subtract two numbers")
