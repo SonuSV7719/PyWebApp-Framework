@@ -5,6 +5,11 @@ export default withMermaid({
   title: "PyWebApp Native",
   description: "High-Performance Cross-Platform Framework",
   base: '/PyWebApp-Framework/',
+  head: [
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+    ['link', { href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', rel: 'stylesheet' }],
+  ],
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
@@ -42,6 +47,12 @@ export default withMermaid({
     footer: {
       message: 'Released under the MIT License.',
       copyright: 'Copyright © 2026 Sonu Vishwakarma'
+    },
+    search: {
+      provider: 'local'
     }
+  },
+  mermaid: {
+    theme: 'dark'
   }
 })
