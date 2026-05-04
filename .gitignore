@@ -12,6 +12,8 @@ ENV/
 build/
 *.spec
 dist/
+*.egg-info/
+.pytest_cache/
 
 # Android
 .gradle/
