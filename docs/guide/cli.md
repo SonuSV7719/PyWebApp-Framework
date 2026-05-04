@@ -38,9 +38,14 @@ Generates a portable binary for Linux distributions.
 - **Output:** `dist/MyApp` (executable)
 
 ### `pywebapp build-web`
-Generates a single-file static website.
-- **Output:** `frontend/dist/index.html`
-- **Features:** Inlines all JS/CSS to bypass CORS/Origin issues. Works directly from a USB stick!
+Generates a production-ready static website.
+- **Output:** `frontend/dist`
+- **Features:** Optimized build that can be served via any HTTP server.
+
+### `pywebapp serve`
+Starts the universal HTTP server to test your web builds with a live Python API.
+- **Option:** `--port <port_number>` (Default: 18090)
+- **What it does:** Serves your frontend while automatically running your Python backend functions via REST API.
 
 ---
 

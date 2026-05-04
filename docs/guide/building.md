@@ -58,26 +58,26 @@ For `assembleRelease` or `bundleRelease` to work, you must have configured your 
 
 ## Web App (Browser Only)
 
-While PyWebApp is designed for native apps with a Python backend, the frontend is a standard React application. 
-
-If your backend logic can be mocked (or if you eventually migrate the backend to a cloud REST API), you can deploy the frontend as a standard web application.
+PyWebApp includes a powerful universal server that allows you to deploy your frontend and Python backend to the web.
 
 ### 1. Build the Static Files
+Run the following command from your project root:
+
 ```bash
-cd frontend
-npm run build
+# Build the production frontend
+pywebapp build-web
 ```
 
-### 2. Output
-The output is generated in `frontend/dist/`. This folder contains a standard `index.html` and bundled JS/CSS files.
+### 2. Test Locally
+Use the built-in server to test the web build with your real Python backend:
+
+```bash
+# Start the web server and Python API
+pywebapp serve
+```
+Your app will be available at `http://localhost:18090`. Any Python functions called from React will hit the live Python backend via REST API.
 
 ### 3. Deployment
-You can deploy the `frontend/dist/` folder to any static hosting service, such as:
-- GitHub Pages
-- Vercel
-- Netlify
-- AWS S3 / CloudFront
+The output is generated in `frontend/dist/`. 
 
-::: warning Python Backend in the Browser
-Currently, standard browsers cannot run Python natively. If you deploy your app to the web, any `call('my_python_func')` will hit the mock dev bridge unless you update `bridge.js` to route those calls to a cloud-hosted Python API (like FastAPI or Flask).
-:::
+To deploy to production, you can host the static files on a CDN (Vercel, Netlify, S3) and host your PyWebApp Python server on a cloud provider (Render, AWS, DigitalOcean). The bridge automatically detects when it's running on the web and sends IPC calls over standard HTTP!

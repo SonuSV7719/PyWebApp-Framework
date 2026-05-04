@@ -1,14 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { viteSingleFile } from "vite-plugin-singlefile";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react(), 
-    // Only inline files for production to keep HMR fast in development
-    process.env.NODE_ENV === 'production' ? viteSingleFile() : null
-  ].filter(Boolean),
+    react(),
+  ],
 
   // CRITICAL: Use relative paths so WebView can load from file:// protocol
   base: './',
