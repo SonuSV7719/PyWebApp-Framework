@@ -37,6 +37,7 @@ export default withMermaid({
           { text: 'Scaling Your App', link: '/guide/scaling' },
           { text: 'App: Calculation App', link: '/guide/calculation-tutorial' },
           { text: 'Mastering Permissions', link: '/guide/permissions' },
+          { text: 'Mobile Routing', link: '/guide/routing' },
           { text: 'Android Build', link: '/platforms/android' },
           { text: 'Desktop Build', link: '/platforms/desktop' }
         ]
