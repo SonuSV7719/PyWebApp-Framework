@@ -23,6 +23,31 @@ def init_project(name):
     repo_url = "https://github.com/SonuSV7719/PyWebApp-Framework.git"
     try:
         subprocess.run(["git", "clone", repo_url, name], check=True)
+        
+        # Cleanup unnecessary folders
+        project_path = os.path.join(os.getcwd(), name)
+        folders_to_remove = ['docs', 'tests']
+        
+        import shutil
+        for folder in folders_to_remove:
+            path = os.path.join(project_path, folder)
+            if os.path.exists(path):
+                shutil.rmtree(path)
+                print(f"🧹 Removed {folder}/")
+
+        # Remove egg-info if they exist
+        for item in os.listdir(project_path):
+            if item.endswith('.egg-info'):
+                shutil.rmtree(os.path.join(project_path, item))
+                print(f"🧹 Removed {item}/")
+
+        # Fresh start: Re-initialize Git to remove framework history
+        git_path = os.path.join(project_path, ".git")
+        if os.path.exists(git_path):
+            shutil.rmtree(git_path)
+            subprocess.run(["git", "init"], cwd=project_path, check=True)
+            print("✨ Git re-initialized for a fresh start.")
+
         print(f"✅ Project '{name}' created successfully!")
         print(f"👉 To start: cd {name} && pywebapp dev")
     except Exception as e:
