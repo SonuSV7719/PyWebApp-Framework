@@ -28,3 +28,6 @@ keystore.properties
 # OS files
 .DS_Store
 Thumbs.db
+
+# Separate package repos (not part of this template)
+packages/

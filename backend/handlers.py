@@ -13,9 +13,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Union
 
-from .context import get_context
-from .logger import get_logger
-from .registry import register
+from pywebapp.core import get_logger, register
+from pywebapp.core.context import get_context
 
 logger = get_logger("handlers")
 

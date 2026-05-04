@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { call, getPlatform, pickImage, showToast, getBase64FromUri, pickFile, openCamera } from './bridge';
+import { call, getPlatform, pickImage, showToast, getBase64FromUri, pickFile, openCamera } from 'pywebapp-bridge';
 import ResultCard from './components/ResultCard';
 
 export default function App() {
