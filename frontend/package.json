@@ -5,8 +5,8 @@
   "description": "React frontend for cross-platform Python IPC application",
   "type": "module",
   "scripts": {
-    "dev": "python ../scripts/sync_config.py && vite",
-    "build": "python ../scripts/sync_config.py && vite build",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
