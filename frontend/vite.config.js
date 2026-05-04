@@ -4,7 +4,11 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), viteSingleFile()],
+  plugins: [
+    react(), 
+    // Only inline files for production to keep HMR fast in development
+    process.env.NODE_ENV === 'production' ? viteSingleFile() : null
+  ].filter(Boolean),
 
   // CRITICAL: Use relative paths so WebView can load from file:// protocol
   base: './',
