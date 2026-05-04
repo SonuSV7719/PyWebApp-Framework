@@ -3,7 +3,7 @@
 Welcome to the **PyWebApp Native** documentation. This framework is designed for high-performance, cross-platform application development.
 
 ### 🗺️ Explore the Framework
-[🚀 Quick Start](#-quick-start-30-seconds) | [⌨️ CLI Reference](./guide/cli) | [💰 Licensing](#-licensing)
+[🚀 Quick Start](#-quick-start-30-seconds) | [⌨️ CLI Reference](./guide/cli) | [🏗️ Modular Tutorial](./guide/tutorial2) | [💰 Licensing](#-licensing)
 
 ---
 
@@ -23,6 +23,7 @@ PyWebApp Native is the **Elite Tier** of cross-platform development. Most tradit
 #### 💻 Developer Experience (DX)
 - **🚀 Unified CLI:** One tool to rule them all. `init`, `dev`, and `build` commands.
 - **🔥 Double-Hot-Reload:** Instant UI updates via Vite + Instant Backend updates via our Python File Observer.
+- **📂 Modular & Recursive Backend:** Organize your logic into sub-folders and multiple files. Everything in `backend/` is automatically synced and discovered.
 - **📉 Zero Boilerplate:** No complex XML or config files. Initialize and start coding in 30 seconds.
 - **🛠️ Integrated Bridge:** Call Python from JS and JS from Python with simple `call()` and `register()` functions.
 
