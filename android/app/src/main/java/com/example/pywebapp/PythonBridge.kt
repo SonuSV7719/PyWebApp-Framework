@@ -71,7 +71,7 @@ class PythonBridge(
     // Cached reference to the Python API module
     private val apiModule: PyObject by lazy {
         val py = Python.getInstance()
-        py.getModule("api")
+        py.getModule("pywebapp.core.api")
     }
 
     /**
