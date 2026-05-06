@@ -2,5 +2,20 @@
   "app_name": "PyWebApp Native",
   "app_version": "1.0.0",
   "app_id": "com.pywebapp.native",
-  "icon_path": "assets/logo.png"
+  "icon_path": "assets/logo.png",
+  "android": {
+    "app_name": "PyWebApp Android",
+    "icon_path": "assets/logo.png",
+    "splash_image": "assets/logo.png"
+  },
+  "desktop": {
+    "app_name": "PyWebApp Desktop",
+    "window_width": 1280,
+    "window_height": 720
+  },
+  "cors_origins": [
+    "http://localhost:*",
+    "http://127.0.0.1:*",
+    "http://[::1]:*"
+  ]
 }
