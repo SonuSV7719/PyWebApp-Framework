@@ -25,6 +25,7 @@ const DashboardCard = ({ title, icon, children, loading, error }) => (
 
 export default function App() {
   const platform = getPlatform();
+  const [activeTab, setActiveTab] = useState('overview');
 
   // ─── 1. Telemetry State ───
   const [telemetry, setTelemetry] = useState(null);
@@ -146,13 +147,30 @@ export default function App() {
 
   // Initial load
   useEffect(() => {
-    // Hide native splash screen on Android once React mounts
-    if (window.NativeBridge && window.NativeBridge.hideSplash) {
-      window.NativeBridge.hideSplash();
+    const initBackend = () => {
+      // Hide native splash screen on Android once React mounts
+      if (window.NativeBridge && window.NativeBridge.hideSplash) {
+        window.NativeBridge.hideSplash();
+      }
+      loadTelemetry();
+      loadDatabase();
+    };
+
+    // Prevent race condition on Desktop where PyWebView injects slightly after React mounts
+    if (window.pywebview || window.NativeBridge || window.__PYWEBAPP_API_URL__) {
+      initBackend();
+    } else {
+      // Wait for pywebview injection event
+      window.addEventListener('pywebviewready', initBackend);
+      // Fallback for pure web dev mode after 1 second
+      const fallback = setTimeout(() => {
+        if (!window.pywebview) initBackend();
+      }, 1000);
+      return () => {
+        window.removeEventListener('pywebviewready', initBackend);
+        clearTimeout(fallback);
+      };
     }
-    
-    loadTelemetry();
-    loadDatabase();
   }, []);
 
   return (
@@ -174,20 +192,28 @@ export default function App() {
         </div>
 
         <nav className="nav-menu">
-          <a href="#" className="nav-item active">⊞ Overview</a>
-          <a href="#" className="nav-item">⚙️ Settings</a>
-          <a href="#" className="nav-item">📚 Documentation</a>
+          <a href="#" className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('overview'); }}>⊞ Overview</a>
+          <a href="#" className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('settings'); }}>⚙️ Settings</a>
+          <a href="#" className={`nav-item ${activeTab === 'documentation' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('documentation'); }}>📚 Documentation</a>
         </nav>
       </aside>
 
       {/* Main Content */}
       <main className="main-content">
         <header className="top-header">
-          <h1>System Overview</h1>
-          <p>Real-time data powered by the native backend</p>
+          <h1>
+            {activeTab === 'overview' ? 'System Overview' : 
+             activeTab === 'settings' ? 'Application Settings' : 
+             'API Documentation'}
+          </h1>
+          <p>
+            {activeTab === 'overview' ? 'Real-time data powered by the native backend' : 
+             'Build your custom interfaces here.'}
+          </p>
         </header>
 
-        <div className="grid-container">
+        {activeTab === 'overview' && (
+          <div className="grid-container">
           
           {/* Telemetry Card */}
           <DashboardCard title="Hardware Telemetry" icon="💻" loading={telemetryLoading}>
@@ -283,6 +309,29 @@ export default function App() {
           </DashboardCard>
 
         </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="grid-container">
+            <DashboardCard title="User Preferences" icon="⚙️">
+              <p className="description">This is a placeholder page. You can add your application's custom settings, toggles, and profile controls here.</p>
+              <div style={{marginTop: '20px'}}>
+                <label style={{display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-light)'}}>
+                  <input type="checkbox" defaultChecked /> Enable Dark Mode
+                </label>
+              </div>
+            </DashboardCard>
+          </div>
+        )}
+
+        {activeTab === 'documentation' && (
+          <div className="grid-container">
+            <DashboardCard title="Developer Docs" icon="📚">
+              <p className="description">Welcome to the PyWebApp template. Modify <code>backend/handlers.py</code> to add new Python functions, and call them from React using <code>call('your_function_name')</code>.</p>
+            </DashboardCard>
+          </div>
+        )}
+
       </main>
     </div>
   );
