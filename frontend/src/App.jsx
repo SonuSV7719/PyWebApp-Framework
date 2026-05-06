@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { call, getPlatform, pickFile } from 'pywebapp-bridge';
+import { call, getPlatform, pickFile, requestPermission, PERMISSIONS, showToast } from 'pywebapp-bridge';
 import './App.css';
 
 // Generic card component for the dashboard
@@ -45,6 +45,10 @@ export default function App() {
   const [pingResult, setPingResult] = useState(null);
   const [pingLoading, setPingLoading] = useState(false);
   const [pingError, setPingError] = useState('');
+
+  // ─── 5. Permissions State ───
+  const [permLoading, setPermLoading] = useState(false);
+  const [permResult, setPermResult] = useState(null);
 
   // ─── Handlers ───
 
@@ -115,6 +119,27 @@ export default function App() {
       setPingError(err.message);
     } finally {
       setPingLoading(false);
+    }
+  };
+
+  const handleRequestCamera = async () => {
+    setPermLoading(true);
+    setPermResult(null);
+    try {
+      // 1. Check if we already have it natively via Python
+      const checkRes = await call('check_permission', ['android.permission.CAMERA']);
+      if (checkRes.granted) {
+        setPermResult('Granted ✅ (Already possessed)');
+        return;
+      }
+      
+      // 2. Request it natively via Python
+      const reqRes = await call('request_permission_python', ['android.permission.CAMERA']);
+      setPermResult(reqRes.granted ? 'Granted ✅' : 'Denied ❌');
+    } catch (err) {
+      setPermResult('Error: ' + err.message);
+    } finally {
+      setPermLoading(false);
     }
   };
 
@@ -237,6 +262,21 @@ export default function App() {
                 <p style={{marginTop: '10px', fontSize: '0.9rem', color: 'var(--text-muted)'}}>
                   HTTP Status: {pingResult.status}
                 </p>
+              </div>
+            )}
+          </DashboardCard>
+
+          {/* Native Permissions Card */}
+          <DashboardCard title="Python-Driven Permissions" icon="🛡️" loading={permLoading}>
+            <p className="description">
+              Check and request native Android permissions utilizing the extensive <code>pywebapp.plugins.permissions</code> module entirely from Python.
+            </p>
+            <button className="btn btn-info" onClick={handleRequestCamera} style={{width: '100%'}}>
+              Request Camera via Python
+            </button>
+            {permResult && (
+              <div className={`result-box ${permResult.includes('Granted') ? 'success' : 'error'}`} style={{marginTop: '15px'}}>
+                <p><strong>Status:</strong> {permResult}</p>
               </div>
             )}
           </DashboardCard>

@@ -159,3 +159,35 @@ def ping_server(url: str = "https://1.1.1.1") -> Dict[str, Any]:
         return {"success": False, "error": f"Connection failed: {e.reason}"}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+# ─── 5. Native Permissions (Python-Driven) ───────────────────────
+
+@register(description="Check Android permissions directly from Python")
+def check_permission(permission: str) -> Dict[str, Any]:
+    """
+    Demonstrates using the internal Python permissions plugin.
+    This plugin has dozens of mapped constants (CAMERA, LOCATION, SMS, etc).
+    """
+    logger.info(f"Checking permission natively: {permission}")
+    try:
+        from pywebapp.plugins import permissions
+        status = permissions.get_status(permission)
+        return {"success": True, "granted": status, "permission": permission}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@register(description="Request Android permissions directly from Python")
+def request_permission_python(permission: str) -> Dict[str, Any]:
+    """
+    Triggers the native Android permission popup from Python.
+    The thread will safely block until the user taps Allow or Deny.
+    """
+    logger.info(f"Requesting permission natively: {permission}")
+    try:
+        from pywebapp.plugins import permissions
+        # Blocks until user responds, but doesn't freeze the UI because 
+        # handlers run in an async threadpool!
+        granted = permissions.request(permission)
+        return {"success": True, "granted": granted, "permission": permission}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
