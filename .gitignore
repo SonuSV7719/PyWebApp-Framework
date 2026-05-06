@@ -31,3 +31,4 @@ Thumbs.db
 
 # Separate package repos (not part of this template)
 packages/
+local_data/
