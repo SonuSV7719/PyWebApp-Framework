@@ -54,28 +54,33 @@ def _get_db_path() -> str:
     os.makedirs(data_dir, exist_ok=True)
     return os.path.join(data_dir, "app_database.sqlite")
 
-@register(description="Initialize and fetch recent activity logs")
-def fetch_logs() -> List[Dict[str, Any]]:
-    """Connects to a local SQLite database and fetches the latest logs."""
-    db_path = _get_db_path()
-    logger.info(f"Accessing database at: {db_path}")
-    
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
-        # Ensure table exists
-        cursor.execute('''
+def get_db_connection():
+    """Context-aware SQLite connection manager."""
+    conn = sqlite3.connect(_get_db_path())
+    conn.row_factory = sqlite3.Row
+    # Ensure table exists immediately when connection is created
+    with conn:
+        conn.execute('''
             CREATE TABLE IF NOT EXISTS user_activity (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 action TEXT NOT NULL,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        
+    return conn
+
+@register(description="Fetch logs from the database")
+def fetch_logs() -> List[Dict[str, Any]]:
+    """Connects to a local SQLite database and fetches the latest logs."""
+    logger.info(f"Accessing database at: {_get_db_path()}")
+    
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
         # Fetch last 5 logs
         cursor.execute('SELECT id, action, timestamp FROM user_activity ORDER BY id DESC LIMIT 5')
         rows = cursor.fetchall()
         
-    return [{"id": r[0], "action": r[1], "timestamp": r[2]} for r in rows]
+    return [{"id": r["id"], "action": r["action"], "timestamp": r["timestamp"]} for r in rows]
 
 @register(description="Insert a new activity log")
 def add_log(action: str) -> Dict[str, Any]:
@@ -83,7 +88,7 @@ def add_log(action: str) -> Dict[str, Any]:
     if not action or not action.strip():
         return {"success": False, "error": "Action cannot be empty"}
         
-    with sqlite3.connect(_get_db_path()) as conn:
+    with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('INSERT INTO user_activity (action) VALUES (?)', (action.strip(),))
         conn.commit()

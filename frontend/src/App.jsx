@@ -56,7 +56,7 @@ export default function App() {
     setTelemetryLoading(true);
     try {
       const res = await call('get_device_telemetry');
-      if (res.success !== false) setTelemetry(res);
+      if (res.success) setTelemetry(res.result);
     } finally {
       setTelemetryLoading(false);
     }
@@ -66,7 +66,8 @@ export default function App() {
     setDbLoading(true);
     try {
       const res = await call('fetch_logs');
-      if (Array.isArray(res)) setLogs(res);
+      if (res.success && Array.isArray(res.result)) setLogs(res.result);
+      else if (res.success) setLogs([]);
     } finally {
       setDbLoading(false);
     }
@@ -92,10 +93,10 @@ export default function App() {
         const targetPath = fileRes.path || fileRes.uri; 
         const res = await call('calculate_file_hash', [targetPath]);
         
-        if (res.success) {
-          setHashResult({ ...res, name: fileRes.name || targetPath.split('/').pop() });
+        if (res.success && res.result.success) {
+          setHashResult({ ...res.result, name: fileRes.name || targetPath.split('/').pop() });
         } else {
-          setHashError(res.error);
+          setHashError(res.result?.error || res.error);
         }
       } else if (fileRes.error !== 'Cancelled') {
         setHashError(fileRes.error);
@@ -113,8 +114,8 @@ export default function App() {
     setPingError('');
     try {
       const res = await call('ping_server', [pingTarget]);
-      if (res.success) setPingResult(res);
-      else setPingError(res.error);
+      if (res.success && res.result.success) setPingResult(res.result);
+      else setPingError(res.result?.error || res.error);
     } catch (err) {
       setPingError(err.message);
     } finally {
@@ -128,14 +129,14 @@ export default function App() {
     try {
       // 1. Check if we already have it natively via Python
       const checkRes = await call('check_permission', ['android.permission.CAMERA']);
-      if (checkRes.granted) {
+      if (checkRes.success && checkRes.result.granted) {
         setPermResult('Granted ✅ (Already possessed)');
         return;
       }
       
       // 2. Request it natively via Python
       const reqRes = await call('request_permission_python', ['android.permission.CAMERA']);
-      setPermResult(reqRes.granted ? 'Granted ✅' : 'Denied ❌');
+      setPermResult(reqRes.success && reqRes.result.granted ? 'Granted ✅' : 'Denied ❌');
     } catch (err) {
       setPermResult('Error: ' + err.message);
     } finally {
