@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 
 export default withMermaid({
-  title: "PyWebApp Native",
+  title: "PyWebApp Native v2.3.0",
   description: "High-Performance Cross-Platform Framework",
   base: '/PyWebApp-Framework/',
   head: [
@@ -20,6 +20,7 @@ export default withMermaid({
       {
         text: '🏗️ The Framework (Pip)',
         items: [
+          { text: 'Prerequisites', link: '/guide/prerequisites' },
           { text: 'Core Architecture', link: '/guide/architecture' },
           { text: 'App Configuration', link: '/guide/configuration' },
           { text: 'GitHub Setup', link: '/guide/github-setup' },

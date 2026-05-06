@@ -1,9 +1,9 @@
-# 🏛️ PyWebApp Native: The Official Guide
+# 🏛️ PyWebApp Native: The Official Guide (v2.3.0)
 
-Welcome to the **PyWebApp Native** documentation. This framework is designed for high-performance, cross-platform application development.
+Welcome to the **PyWebApp Native v2.3.0** documentation. This framework is designed for high-performance, cross-platform application development with a focus on professional branding and thread-safe logic.
 
 ### 🗺️ Explore the Framework
-[🚀 Quick Start](#-quick-start-30-seconds) | [⌨️ CLI Reference](./guide/cli) | [🏗️ Modular Tutorial](./guide/tutorial2) | [💰 Licensing](#-licensing)
+[🚀 Quick Start](#-quick-start-30-seconds) | [📋 Prerequisites](./guide/prerequisites) | [⌨️ CLI Reference](./guide/cli) | [🏗️ Architecture](./guide/architecture)
 
 ---
 
@@ -15,30 +15,28 @@ PyWebApp Native is the **Elite Tier** of cross-platform development. Most tradit
 
 ### 🚀 The "Killer" Advantages
 - **📉 Zero Learning Curve:** If you know Python and any Web framework, you already know 100% of PyWebApp. No proprietary UI languages to learn.
-- **⚛️ Framework Agnostic:** While we recommend React, our native bridge works flawlessly with **Vue, Svelte, Angular**, or even plain **HTML/JS**.
+- **🔒 Thread-Safe & Atomic:** (New in v2.3.0) A hardened IPC engine with a recursive locking system, ensuring your app never crashes under high concurrency.
+- **📂 High-Fidelity 1:1 Mirroring:** (New in v2.3.0) Your backend code structure is mirrored exactly 1:1 on the device, enabling standard native imports and cleaner code.
 - **🎨 Unlimited UI Power:** Use Tailwind, Framer Motion, or any modern web library. Your app will look like a 2026 flagship, not a legacy desktop tool.
 
 ### 🏗️ The Full Feature Set
 
 #### 💻 Developer Experience (DX)
-- **🚀 Unified CLI:** One tool to rule them all. `init`, `dev`, and `build` commands.
+- **🚀 Unified CLI:** One tool to rule them all. `init`, `dev`, and `build` commands. Now with interactive target selection!
 - **🔥 Double-Hot-Reload:** Instant UI updates via Vite + Instant Backend updates via our Python File Observer.
 - **📂 Modular & Recursive Backend:** Organize your logic into sub-folders and multiple files. Everything in `backend/` is automatically synced and discovered.
-- **📉 Zero Boilerplate:** No complex XML or config files. Initialize and start coding in 30 seconds.
 - **🛠️ Integrated Bridge:** Call Python from JS and JS from Python with simple `call()` and `register()` functions.
 
 #### 📱 Hardware & Native Capabilities
+- **📱 Professional Branding:** (v2.3.0) Native Splash Screens and Adaptive Icon generation for a premium Android presence.
 - **📸 Camera & Media:** Built-in hardware intents for capturing photos and videos.
 - **📂 High-Speed File Picker:** Native file resolution that returns absolute paths for zero-copy file processing.
 - **🛰️ GPS & Location:** First-class support for location-aware applications.
 - **🔔 Native Notifications:** Trigger OS-level notifications on Android and Desktop.
-- **🔋 Battery & Status:** Monitor device hardware status directly from your Python logic.
 
 #### 📦 Production & Deployment
 - **🔐 Signed Android APKs:** Automated keystore generation and Gradle signing.
-- **💎 Hardened Desktop EXEs:** Portable, single-file executables with a hidden console for a premium feel.
-- **🌐 Single-File Web Apps:** Generate a massive static HTML file with inlined JS/CSS—perfect for local-first tools.
-- **⚙️ Centralized Branding:** Manage your app name, version, and icon globally in `pywebapp.json`.
+- **⚙️ Centralized Branding:** Manage your app name, version, and icon globally (with platform overrides) in `pywebapp.json`.
 
 #### 🏛️ Architecture & Ecosystem
 - **🐍 Full PyPI Access:** Use Pandas, Numpy, OpenCV, TensorFlow, or any other Python library.
@@ -51,6 +49,7 @@ PyWebApp Native is the **Elite Tier** of cross-platform development. Most tradit
 - **🏗️ Logic:** Use any Python library from **PyPI** (Numpy, Pandas, OpenCV, etc.).
 - **🤖 Mobile:** Native Android builds via **Chaquopy** integration.
 
+::: details 📊 Benchmarks & Comparison
 ### 🏆 How we beat the competition
 | Feature | PyWebApp Native | Other Frameworks | Standard Desktop Wrappers |
 | :--- | :---: | :---: | :---: |
@@ -68,6 +67,7 @@ PyWebApp Native is the **Elite Tier** of cross-platform development. Most tradit
 | **Build Size (Hello World)** | ~28 MB | ~115 MB | ~15 MB |
 | **IPC Message Latency** | < 1ms | ~2-4ms | N/A |
 | **2GB File Handling** | ⚡ Instant (Path-based) | 🐢 Slow (Base64) | ⚠️ Memory Heavy |
+:::
 
 ---
 
@@ -116,6 +116,7 @@ PyWebApp uses a **Master Hub** system.
 
 ## 🛠️ Advanced Usage
 
+::: details 🛠️ Advanced Usage Example
 ### High-Performance File Handling
 Unlike other frameworks that slow down when handling large files (by using Base64 strings), PyWebApp uses a **Native Path Bridge**. 
 
@@ -135,6 +136,7 @@ if (result.success) {
     const status = await call('process_massive_video', { path: result.path });
 }
 ```
+:::
 
 ---
 

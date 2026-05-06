@@ -24,6 +24,10 @@ android {
     namespace = "com.example.pywebapp"
     compileSdk = 34
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.pywebapp"
         minSdk = 24

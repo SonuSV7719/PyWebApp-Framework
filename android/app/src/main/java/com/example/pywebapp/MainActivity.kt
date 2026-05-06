@@ -45,12 +45,12 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "PyWebApp"
 
         // ─── Dev Mode Configuration ─────────────────────────────
-        // Set to true during development for hot reload support.
+        // Automatically enabled for Debug builds.
         // In dev mode:
         //   - Frontend loads from Vite dev server (HMR)
         //   - Python loads from /data/local/tmp/pywebapp/python/ (ADB push)
         //   - BroadcastReceiver listens for reload signals
-        private const val DEV_MODE = false  // Toggle for development
+        private val DEV_MODE = BuildConfig.DEBUG  // Auto-detect based on build type
 
         // Vite dev server URL (use 10.0.2.2 for emulator, or your machine's IP)
         private const val DEV_SERVER_URL = "http://10.0.2.2:5173"
@@ -70,6 +70,14 @@ class MainActivity : AppCompatActivity() {
             } else {
                 pythonBridge?.sendResultToJs(cbId, """{"success":false,"error":"No image selected"}""")
             }
+            pendingCallbackId = null
+        }
+    }
+
+    // 🔐 UNIVERSAL PERMISSION LAUNCHER: Real-time Allow/Deny popup
+    private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        pendingCallbackId?.let { cbId ->
+            pythonBridge?.sendResultToJs(cbId, """{"success":true,"granted":$isGranted}""")
             pendingCallbackId = null
         }
     }
@@ -96,13 +104,18 @@ class MainActivity : AppCompatActivity() {
         universalLauncher.launch(intent)
     }
 
+    /**
+     * REAL PERMISSION REQUEST: Shows the Android system popup
+     */
+    fun requestRuntimePermission(permission: String, callbackId: String) {
+        this.pendingCallbackId = callbackId
+        permissionLauncher.launch(permission)
+    }
+
+    private var splashLayout: android.view.View? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // ⚡ WARM-UP: Pre-initialize WebView process immediately
-        // This shaves off 200-300ms from the initial load.
-        WebView(this).destroy() 
-
         setContentView(R.layout.activity_main)
 
         // Initialize Python runtime (Chaquopy)
@@ -111,6 +124,9 @@ class MainActivity : AppCompatActivity() {
         // Setup WebView
         webView = findViewById(R.id.webView)
         setupWebView()
+
+        // 🚀 Setup Splash Overlay
+        showSplashOverlay()
 
         // Create and register the Python bridge
         pythonBridge = PythonBridge(this, webView)
@@ -125,6 +141,42 @@ class MainActivity : AppCompatActivity() {
         val url = if (DEV_MODE) DEV_SERVER_URL else PROD_FRONTEND_URL
         webView.loadUrl(url)
         Log.i(TAG, "Frontend loaded from: $url (dev=$DEV_MODE)")
+    }
+
+    private fun showSplashOverlay() {
+        val splashId = resources.getIdentifier("splash_logo", "drawable", packageName)
+        if (splashId == 0) return
+
+        val root = findViewById<android.view.ViewGroup>(android.R.id.content)
+        val layout = android.widget.FrameLayout(this)
+        layout.layoutParams = android.widget.FrameLayout.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT
+        )
+        layout.setBackgroundColor(android.graphics.Color.parseColor("#1a1a1a"))
+
+        val logo = android.widget.ImageView(this)
+        val logoSize = (180 * resources.displayMetrics.density).toInt()
+        val params = android.widget.FrameLayout.LayoutParams(logoSize, logoSize)
+        params.gravity = android.view.Gravity.CENTER
+        logo.layoutParams = params
+        logo.setImageResource(splashId)
+
+        layout.addView(logo)
+        root.addView(layout)
+        this.splashLayout = layout
+    }
+
+    fun hideSplashScreen() {
+        runOnUiThread {
+            splashLayout?.animate()
+                ?.alpha(0f)
+                ?.setDuration(400)
+                ?.withEndAction {
+                    (splashLayout?.parent as? android.view.ViewGroup)?.removeView(splashLayout)
+                    splashLayout = null
+                }
+        }
     }
 
     /**

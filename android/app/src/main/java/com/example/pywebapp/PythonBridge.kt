@@ -44,12 +44,26 @@ class PythonBridge(
         // Initialize Python context on a background thread
         executor.execute {
             try {
-                // Fetch the entire environment automatically
+                // 1. Fetch and set the system environment
                 val contextJson = getSystemEnv()
                 apiModule.callAttr("set_context", contextJson)
-                Log.i(TAG, "Python context auto-initialized via Universal Hub")
+                
+                // 2. ⚡ REGISTER NATIVE CALLBACKS: 
+                // We inject a native Java function into the Python registry
+                val py = Python.getInstance()
+                val registry = py.getModule("pywebapp.core.registry")
+                val methodRegistry = registry["method_registry"]
+                
+                // Lambda that calls back to the Activity
+                methodRegistry?.put("internal_hide_splash", object : Runnable {
+                    override fun run() {
+                        (context as? MainActivity)?.hideSplashScreen()
+                    }
+                })
+
+                Log.i(TAG, "Python context & native callbacks initialized")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to initialize Python context", e)
+                Log.e(TAG, "Failed to initialize Python bridge hooks", e)
             }
         }
     }
@@ -61,9 +75,15 @@ class PythonBridge(
     }
 
     /**
+     * SPLASH SCREEN CONTROLLER: Allows JS to dismiss the splash screen when UI is ready.
+     */
+    @JavascriptInterface
+    fun hideSplash() {
+        (context as? MainActivity)?.hideSplashScreen()
+    }
+
+    /**
      * UNIVERSAL CONTEXT HUB: Provides all Android-specific environment info to Python.
-     * This makes the bridge scalable because we can add new info here without changing
-     * the bridge's method signatures.
      */
     @JavascriptInterface
     fun getSystemEnv(): String {
@@ -90,11 +110,9 @@ class PythonBridge(
             // SILENT SUCCESS: Already granted, return immediately without flicker
             sendResultToJs(callbackId, """{"success":true,"permission":"$permission","granted":true,"silent":true}""")
         } else {
-            // REAL REQUEST: Only show dialog if we actually need it
-            Log.i(TAG, "Requesting permission: $permission")
-            // In a full implementation, we would use requestPermissions here.
-            // For now, we return success to keep the demo moving.
-            sendResultToJs(callbackId, """{"success":true,"permission":"$permission","granted":true,"silent":false}""")
+            // REAL REQUEST: Trigger the Android system popup via MainActivity
+            Log.i(TAG, "Triggering real permission request: $permission")
+            (context as? MainActivity)?.requestRuntimePermission(permission, callbackId)
         }
     }
 
@@ -239,7 +257,9 @@ class PythonBridge(
      */
     @JavascriptInterface
     fun call(method: String, paramsJson: String, callbackId: String) {
-        Log.d(TAG, "call: method='$method', params=$paramsJson, callback=$callbackId")
+        // 🔒 P0 Security: Sanitize callbackId to prevent XSS injection
+        val safeCallbackId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
+        Log.d(TAG, "call: method='$method', params=$paramsJson, callback=$safeCallbackId")
 
         executor.execute {
             var resultJson: String
@@ -250,11 +270,12 @@ class PythonBridge(
                 Log.d(TAG, "Python result: ${resultJson.take(200)}")
             } catch (e: Exception) {
                 Log.e(TAG, "Python execution error", e)
-                resultJson = """{"success":false,"error":"Android bridge error: ${escapeJson(e.message ?: "Unknown error")}","method":"$method"}"""
+                // 🔒 P0 Security: Escape both error AND method to prevent JSON injection
+                resultJson = """{"success":false,"error":"Android bridge error: ${escapeJson(e.message ?: "Unknown error")}","method":"${escapeJson(method)}"}"""
             }
 
             // Send result back to JavaScript on the UI thread
-            sendResultToJs(callbackId, resultJson)
+            sendResultToJs(safeCallbackId, resultJson)
         }
     }
 
@@ -270,7 +291,8 @@ class PythonBridge(
             pyResult.toString()
         } catch (e: Exception) {
             Log.e(TAG, "callSync error", e)
-            """{"success":false,"error":"${escapeJson(e.message ?: "Unknown error")}","method":"$method"}"""
+            // 🔒 P0 Security: Escape method to prevent JSON injection
+            """{"success":false,"error":"${escapeJson(e.message ?: "Unknown error")}","method":"${escapeJson(method)}"}"""
         }
     }
 
@@ -278,6 +300,9 @@ class PythonBridge(
      * Send a result back to JavaScript by evaluating a callback function.
      */
     internal fun sendResultToJs(callbackId: String, resultJson: String) {
+        // 🔒 P0 Security: Re-sanitize callbackId at the delivery point
+        val safeId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
+
         // Escape the JSON for safe embedding in JavaScript string
         val escapedJson = resultJson
             .replace("\\", "\\\\")
@@ -285,12 +310,33 @@ class PythonBridge(
             .replace("\n", "\\n")
             .replace("\r", "\\r")
 
-        val jsCode = "window.__resolveCallback('$callbackId', '$escapedJson')"
-
-        mainHandler.post {
-            webView.evaluateJavascript(jsCode) { value ->
-                Log.d(TAG, "JS callback executed for $callbackId: $value")
+        // --- Universal Support for Python-only requests ---
+        if (safeId == "internal_python_callback") {
+            try {
+                val py = Python.getInstance()
+                val permModule = py.getModule("pywebapp.plugins.permissions")
+                val isGranted = resultJson.contains("\"granted\":true")
+                permModule.callAttr("_on_permission_result", isGranted)
+                Log.d(TAG, "Sent permission result directly to Python handler")
+                return
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to send result back to Python plugin", e)
             }
+        }
+
+        val js = "window.__resolveCallback('$safeId', $resultJson)"
+        val task = {
+            val startTime = System.currentTimeMillis()
+            webView.evaluateJavascript(js) { value ->
+                val duration = System.currentTimeMillis() - startTime
+                Log.d("PyWebApp.Bridge", "🌐 [JS-Update] Script executed in ${duration}ms for $safeId")
+            }
+        }
+
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            task()
+        } else {
+            mainHandler.post(task)
         }
     }
 

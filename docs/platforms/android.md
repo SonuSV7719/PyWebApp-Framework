@@ -1,123 +1,79 @@
-# Android (Chaquopy)
+# Android (Native Performance)
 
-Setup and configuration for Android devices and emulators.
+PyWebApp-Native provides a zero-friction experience for deploying Python/React applications to Android using [Chaquopy](https://chaquo.com/chaquopy/).
 
 ## Prerequisites
 
-- Android Studio (latest)
-- JDK 17+
-- Android SDK 34
-- Python 3.8+ on your dev machine (for Chaquopy build)
+- **Android Studio** (Koala or later recommended)
+- **JDK 17+**
+- **Android SDK 34+**
+- **Python 3.8+** on your development machine
 
-## Project Setup
+## Professional Branding (New in v2.3.0)
 
-### 1. Build Frontend + Sync Python
+Branding is now managed centrally via `pywebapp.json`. The framework handles the complex Android resource generation for you.
 
-```bash
-python scripts/build_android.py
-```
+### 1. Configure Overrides
+Add an `android` block to your `pywebapp.json` to customize the mobile experience:
 
-This script:
-1. Syncs `backend/*.py` → `android/app/src/main/python/` (with import rewrites)
-2. Builds the React frontend
-3. Copies `frontend/dist/` → `android/app/src/main/assets/web/`
-
-### 2. Open in Android Studio
-
-Open the `android/` directory as a project. Wait for Gradle sync — Chaquopy will download the Python interpreter for your target ABIs.
-
-### 3. Run
-
-Select a device or emulator and click Run.
-
-## Keystore Signing
-
-### Generate a Keystore
-
-```bash
-keytool -genkey -v \
-  -keystore android/pywebapp-release.keystore \
-  -alias pywebapp \
-  -keyalg RSA \
-  -keysize 2048 \
-  -validity 10000
-```
-
-### Configure Signing
-
-Copy the template and fill in your values:
-
-```bash
-cp android/keystore.properties.template android/keystore.properties
-```
-
-Edit `android/keystore.properties`:
-```properties
-storeFile=pywebapp-release.keystore
-storePassword=your_password
-keyAlias=pywebapp
-keyPassword=your_password
-```
-
-::: warning
-Never commit `keystore.properties` or `.keystore` files to git. They're in `.gitignore` by default.
-:::
-
-### Build Signed APK
-
-```bash
-cd android
-./gradlew assembleRelease
-```
-
-Output: `android/app/build/outputs/apk/release/app-release.apk`
-
-## Dev Mode
-
-### Frontend Hot Reload
-
-```bash
-# Dev machine: start Vite with network access
-cd frontend && npm run dev -- --host
-
-# Setup port forwarding to emulator
-adb reverse tcp:5173 tcp:5173
-```
-
-Set `DEV_MODE = true` in `MainActivity.kt`.
-
-### Python Hot Reload
-
-```bash
-# Dev machine: start the sync watcher
-python scripts/dev_sync.py
-```
-
-This watches `backend/`, pushes changes via ADB, and triggers `importlib.reload()` on the device.
-
-## How Chaquopy Works
-
-1. **Build time**: Chaquopy downloads a Python interpreter for each target ABI (arm64-v8a, x86_64)
-2. **APK content**: Python interpreter + your `.py` files are bundled into the APK
-3. **Runtime**: `PyApplication` initializes Python on app start
-4. **Calling Python**: Kotlin uses `Python.getInstance().getModule("api").callAttr("dispatch_json", ...)`
-5. **No server**: Everything runs in-process — no network, no ports
-
-## ABI Configuration
-
-In `app/build.gradle.kts`:
-
-```kotlin
-ndk {
-    // Include only what you need:
-    abiFilters += listOf(
-        "arm64-v8a",    // Modern phones (99% of devices)
-        "x86_64",       // Emulators
-        // "armeabi-v7a" // Older 32-bit devices (optional)
-    )
+```json
+{
+  "android": {
+    "app_name": "My Pro App",
+    "icon_path": "assets/logo.png",
+    "splash_image": "assets/splash.png"
+  }
 }
 ```
 
-::: tip
-Each ABI adds ~15-20MB to the APK. Only include what you need.
-:::
+### 2. Splash Screens
+PyWebApp v2.3.0 features a native splash screen system that hides Python's "warm-up" time.
+- **Auto-Generation**: Place your logo in the `assets/` folder and point to it in `pywebapp.json`.
+- **Dismissal Control**: You can precisely control when the splash screen disappears:
+    - **Python**: `from pywebapp.core import hide_splash; hide_splash()`
+    - **JavaScript**: `window.NativeBridge.hideSplash()`
+
+### 3. Adaptive Icons
+The builder automatically generates Square, Round, and Adaptive icons from your source image, ensuring your app looks premium on all Android versions.
+
+## Development Workflow
+
+### Interactive Dev Mode (Recommended)
+Launch the interactive menu and select **[a] Android**:
+```bash
+pywebapp dev
+```
+Selecting Android will automatically:
+1.  Perform a **Clean Build** of the debug APK. 🧼
+2.  **Install** the APK to your active device or emulator. 📲
+3.  Setup **ADB Port Forwarding** for the React Vite server. 🛰️
+4.  Start the **Live Sync** engine for Python "Hot Reload." 🔄
+
+### Manual Deployment
+For granular control, use the dedicated build command:
+```bash
+# Build, Clean, and Install a fresh Debug version
+pywebapp build-android --debug --clean --install
+```
+
+## Production & Release
+
+### 1. Keystore Signing & Release
+In v2.3.0, the release pipeline is fully automated and secured. Use the dedicated release command:
+
+```bash
+# Generate a cryptographically secure, release-ready AAB/APK
+pywebapp build-android-release
+```
+The framework uses a CSPRNG (`secrets`) to generate passwords and automatically manages the `keystore.properties`.
+
+### 2. ABI Optimization
+By default, the framework builds for `arm64-v8a` (modern phones) and `x86_64` (emulators). To reduce APK size, adjust the `abiFilters` in `android/app/build.gradle.kts`.
+
+## How it Works (v2.3.0)
+
+1.  **Enterprise Security**: The Kotlin bridge natively sanitizes all incoming IPC calls to strictly prevent XSS and JSON injection vectors.
+2.  **Thread-Safe Registry**: The framework uses a thread-safe registry with 30-second timeouts to handle concurrent calls without thread pool starvation.
+3.  **Robust Discovery**: Python handlers are automatically discovered using path-direct, isolated imports, ensuring a scalable enterprise architecture.
+4.  **Native Interop**: Python logic runs in-process via JNI, providing near-native execution speed for ML, data processing, and system tasks.
+

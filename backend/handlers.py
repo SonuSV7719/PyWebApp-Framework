@@ -1,238 +1,161 @@
 """
-Business logic handlers.
-Pure Python functions that implement the application's core functionality.
-All functions are platform-independent and can be called from any native host.
-
-Framework pattern: Use the @register decorator to expose functions via IPC.
-No other changes needed — the dispatcher, bridge, and JS layer pick them up automatically.
+Native Backend API.
+These Python functions interface directly with the Host OS (Android/Windows/Linux)
+to provide high-performance native capabilities to the frontend UI.
 """
 
 import os
 import platform
+import sqlite3
+import hashlib
+import urllib.request
+import urllib.error
 import time
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 from pywebapp.core import get_logger, register
 from pywebapp.core.context import get_context
 
-logger = get_logger("handlers")
+logger = get_logger("native_api")
 
 
-# ─── Arithmetic ──────────────────────────────────────────────────
+# ─── 1. System Telemetry ─────────────────────────────────────────
 
-@register(description="Add two numbers")
-def add(a: Union[int, float], b: Union[int, float]) -> Union[int, float]:
-    """Add two numbers together."""
-    logger.info(f"add({a}, {b})")
-    return a + b
-
-# ─── File Handling Example ───────────────────────────────────────
-
-@register(description="Process a massive file and delete it to save space")
-def process_file(file_path: str) -> Dict[str, Any]:
+@register(description="Get hardware and OS telemetry")
+def get_device_telemetry() -> Dict[str, Any]:
     """
-    Example of handling gigabyte-sized files safely.
-    It reads the file natively and immediately deletes it from 
-    the Android cache to prevent running out of phone storage.
+    Fetches real hardware and OS metrics natively.
     """
+    logger.info("Fetching device telemetry...")
+    
+    # Calculate approximate memory using sys for cross-platform compatibility without psutil
+    try:
+        cpu_count = os.cpu_count() or 1
+    except Exception:
+        cpu_count = "Unknown"
+
+    return {
+        "os": platform.system(),
+        "release": platform.release(),
+        "architecture": platform.machine(),
+        "python_version": platform.python_version(),
+        "cpu_cores": cpu_count,
+        "device_name": platform.node()
+    }
+
+
+# ─── 2. Local Database (SQLite) ──────────────────────────────────
+
+def _get_db_path() -> str:
+    """Helper to get a safe, writable path for the SQLite database on any OS."""
+    context = get_context()
+    # On Android, use the secure internal files directory. On desktop, use a local folder.
+    data_dir = context.get("filesDir") or os.path.join(os.getcwd(), "local_data")
+    os.makedirs(data_dir, exist_ok=True)
+    return os.path.join(data_dir, "app_database.sqlite")
+
+@register(description="Initialize and fetch recent activity logs")
+def fetch_logs() -> List[Dict[str, Any]]:
+    """Connects to a local SQLite database and fetches the latest logs."""
+    db_path = _get_db_path()
+    logger.info(f"Accessing database at: {db_path}")
+    
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        # Ensure table exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_activity (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                action TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Fetch last 5 logs
+        cursor.execute('SELECT id, action, timestamp FROM user_activity ORDER BY id DESC LIMIT 5')
+        rows = cursor.fetchall()
+        
+    return [{"id": r[0], "action": r[1], "timestamp": r[2]} for r in rows]
+
+@register(description="Insert a new activity log")
+def add_log(action: str) -> Dict[str, Any]:
+    """Inserts a real record into the SQLite database."""
+    if not action or not action.strip():
+        return {"success": False, "error": "Action cannot be empty"}
+        
+    with sqlite3.connect(_get_db_path()) as conn:
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO user_activity (action) VALUES (?)', (action.strip(),))
+        conn.commit()
+        
+    logger.info(f"Saved log: {action}")
+    return {"success": True, "message": "Record saved successfully"}
+
+
+# ─── 3. File Cryptography ────────────────────────────────────────
+
+@register(description="Calculate the SHA-256 hash of a local file natively")
+def calculate_file_hash(file_path: str) -> Dict[str, Any]:
+    """
+    Reads a file chunk-by-chunk natively (bypassing RAM limits) 
+    and calculates its cryptographic SHA-256 hash.
+    """
+    logger.info(f"Hashing file: {file_path}")
+    
+    # Strip 'file://' prefix if present from webviews
+    if file_path.startswith("file://"):
+        file_path = file_path[7:]
+        
     if not os.path.exists(file_path):
-        return {"success": False, "error": "File not found"}
+        return {"success": False, "error": "File not found on device"}
         
     try:
-        # 1. Get file size natively (0ms latency, 0 RAM overhead)
-        size_mb = os.path.getsize(file_path) / (1024 * 1024)
-        logger.info(f"Processing file: {file_path} ({size_mb:.2f} MB)")
+        sha256_hash = hashlib.sha256()
+        file_size = os.path.getsize(file_path)
         
-        # 2. (Insert your heavy ML or Video processing logic here)
-        
-        # 3. ALWAYS DELETE the file when done to save phone storage!
-        os.remove(file_path)
-        logger.info(f"Deleted temp file: {file_path}")
-        
+        # Read in 4MB chunks to prevent out-of-memory errors on massive files
+        with open(file_path, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096 * 1024), b""):
+                sha256_hash.update(byte_block)
+                
         return {
-            "success": True, 
-            "message": f"Successfully processed and deleted {size_mb:.2f} MB file!"
+            "success": True,
+            "hash": sha256_hash.hexdigest(),
+            "size_mb": round(file_size / (1024 * 1024), 2)
         }
     except Exception as e:
-        logger.error(f"Error processing file: {e}")
+        logger.error(f"Hashing failed: {e}")
         return {"success": False, "error": str(e)}
 
 
-@register(description="Subtract two numbers")
-def subtract(a: Union[int, float], b: Union[int, float]) -> Union[int, float]:
-    """Subtract b from a."""
-    logger.info(f"subtract({a}, {b})")
-    result = a - b
-    logger.debug(f"subtract result: {result}")
-    return result
+# ─── 4. Network Diagnostics ──────────────────────────────────────
 
-
-@register(description="Multiply two numbers")
-def multiply(a: Union[int, float], b: Union[int, float]) -> Union[int, float]:
-    """Multiply two numbers."""
-    logger.info(f"multiply({a}, {b})")
-    result = a * b
-    logger.debug(f"multiply result: {result}")
-    return result
-
-
-# ─── Data Processing ─────────────────────────────────────────────
-
-@register(description="Process and analyze text data")
-def process_data(data: str) -> Dict[str, Any]:
+@register(description="Perform a network latency test")
+def ping_server(url: str = "https://1.1.1.1") -> Dict[str, Any]:
     """
-    Process a string of data and return analysis results.
-
-    Args:
-        data: Input string to process.
-
-    Returns:
-        Dictionary containing analysis results.
+    Uses Python's native urllib to perform a real HTTP GET request
+    and measure the exact round-trip latency.
     """
-    logger.info(f"process_data('{data[:50]}...')" if len(data) > 50 else f"process_data('{data}')")
+    logger.info(f"Pinging {url}...")
+    
+    if not url.startswith("http"):
+        url = "https://" + url
 
-    words = data.split()
-    result = {
-        "original": data,
-        "uppercase": data.upper(),
-        "word_count": len(words),
-        "char_count": len(data.replace(" ", "")),
-        "reversed": data[::-1],
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-
-    logger.debug(f"process_data result: word_count={result['word_count']}")
-    return result
-
-
-# ─── System ──────────────────────────────────────────────────────
-
-@register(description="Get system/platform information")
-def get_system_info() -> Dict[str, str]:
-    """
-    Gather and return system/platform information.
-    Demonstrates that the same Python code runs on all platforms.
-    """
-    logger.info("get_system_info()")
-
-    info = {
-        "platform": platform.system(),
-        "platform_release": platform.release(),
-        "platform_version": platform.version(),
-        "architecture": platform.machine(),
-        "processor": platform.processor() or "N/A",
-        "python_version": platform.python_version(),
-        "hostname": platform.node(),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-
-    logger.debug(f"get_system_info result: {info['platform']} {info['python_version']}")
-    return info
-
-
-# ─── Sequences ───────────────────────────────────────────────────
-
-@register(description="Generate Fibonacci sequence")
-def fibonacci(n: int) -> List[int]:
-    """
-    Generate Fibonacci sequence up to n terms.
-
-    Args:
-        n: Number of Fibonacci terms to generate (max 100).
-
-    Raises:
-        ValueError: If n is negative or exceeds 100.
-    """
-    logger.info(f"fibonacci({n})")
-
-    if not isinstance(n, int) or n < 0:
-        raise ValueError("n must be a non-negative integer")
-    if n > 100:
-        raise ValueError("n must not exceed 100 to prevent memory issues")
-
-    if n == 0:
-        return []
-    if n == 1:
-        return [0]
-
-    seq = [0, 1]
-    for _ in range(2, n):
-        seq.append(seq[-1] + seq[-2])
-
-    logger.debug(f"fibonacci result: {len(seq)} terms")
-    return seq
-
-
-# ─── Long-running Tasks ─────────────────────────────────────────
-
-@register(description="Simulate a long-running task")
-def async_heavy_task(duration_seconds: float = 2.0) -> Dict[str, Any]:
-    """
-    Simulate a long-running task (e.g., ML inference, file processing).
-
-    Args:
-        duration_seconds: How long to simulate work (max 10 seconds).
-    """
-    logger.info(f"async_heavy_task(duration={duration_seconds})")
-
-    duration_seconds = min(float(duration_seconds), 10.0)
-    start = time.time()
-
-    # Simulate work
-    time.sleep(duration_seconds)
-
-    elapsed = time.time() - start
-    result = {
-        "status": "completed",
-        "requested_duration": duration_seconds,
-        "actual_duration": round(elapsed, 3),
-        "message": f"Heavy task finished in {elapsed:.3f}s",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-
-    logger.info(f"async_heavy_task completed in {elapsed:.3f}s")
-    return result
-
-
-# ─── File Processing ─────────────────────────────────────────────
-
-@register(description="Perform file operations in Android storage")
-def process_file_demo(filename: str, content: str) -> Dict[str, Any]:
-    """
-    Demonstrate file I/O on Android.
-    1. Writes content to a file in the app's filesDir.
-    2. Reads it back.
-    3. Returns metadata.
-    """
-    logger.info(f"process_file_demo(filename='{filename}')")
-
-    context = get_context()
-    files_dir = context.get("filesDir")
-
-    if not files_dir:
-        # Fallback for local testing (not on Android)
-        files_dir = os.path.join(os.getcwd(), "temp_storage")
-        os.makedirs(files_dir, exist_ok=True)
-
-    file_path = os.path.join(files_dir, filename)
-
-    # 1. Write
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(content)
-
-    # 2. Read back and get stats
-    size = os.path.getsize(file_path)
-    with open(file_path, "r", encoding="utf-8") as f:
-        read_content = f.read()
-
-    result = {
-        "path": file_path,
-        "size_bytes": size,
-        "content_read": read_content,
-        "success": True,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-
-    logger.info(f"File processed successfully: {file_path} ({size} bytes)")
-    return result
+    start_time = time.time()
+    try:
+        # 3 second timeout
+        req = urllib.request.Request(url, method="HEAD")
+        with urllib.request.urlopen(req, timeout=3.0) as response:
+            status = response.status
+        
+        latency_ms = int((time.time() - start_time) * 1000)
+        return {
+            "success": True,
+            "latency_ms": latency_ms,
+            "status": status,
+            "host": url
+        }
+    except urllib.error.URLError as e:
+        return {"success": False, "error": f"Connection failed: {e.reason}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}

@@ -30,18 +30,22 @@ cd MyApp
 pywebapp build-desktop
 ```
 
-### Development Mode (Recommended)
+### Development Mode (High Velocity) 🚀
 
-Just run a single command! It automatically starts the Vite dev server for your React UI and enables hot-reloading for your Python backend:
+Just run a single command to launch the **Interactive Dev Menu**. It handles everything from Vite servers to Android ADB tunnels automatically:
 
 ```bash
 pywebapp dev
 ```
 
+**Choose your target:**
+- **[d] Desktop**: Launches a native Window on your PC with full Hot-Reload.
+- **[a] Android**: Performs a clean build, installs the APK, and sets up the live sync tunnel to your phone/emulator.
+
 Now you can:
-- Edit React files → changes appear instantly (Vite HMR)
-- Edit Python handlers → modules reload automatically (watchdog)
-- Use DevTools to inspect the WebView (debug mode)
+- **Edit React files** → changes appear instantly (Vite HMR).
+- **Edit Python handlers** → modules reload automatically on all devices. 🔄
+- **Professional Debugging** → Use Chrome DevTools to inspect your app while it's running on Android!
 
 ## Your First IPC Call
 

@@ -78,3 +78,27 @@ Pre-MW 1 → Pre-MW 2 → Handler → Post-MW 1 → Post-MW 2
 ## Error Handling in Middleware
 
 If a pre-middleware raises an exception, the handler is **not called** and the error is returned to the caller via the dispatcher's error handling.
+
+---
+
+## 🔒 Thread Safety (New in v2.3.0)
+
+In v2.3.0, the `MethodRegistry` was hardened for high-concurrency environments (like multi-threaded Android apps). 
+
+### Atomic Execution
+The entire execution pipeline is protected by a **Recursive Lock (RLock)**:
+1. **Pre-Middleware** execution
+2. **Handler** execution (synchronous only)
+3. **Post-Middleware** execution
+
+This means that if you are using middleware to update a global cache or database, you are protected from **Race Conditions**. No two threads can execute the registry pipeline at the exact same millisecond.
+
+### Async Performance
+For **`async def`** handlers, the registry is smart:
+- It acquires the lock to run pre-middleware and find the handler.
+- It **releases the lock** while the `async` task is awaiting (e.g., `asyncio.sleep`).
+- This allows other non-blocking tasks to run while your long-running task is waiting for I/O.
+
+::: tip
+If your middleware modifies global variables, you don't need to add your own locks anymore—the framework handles it for you!
+:::
