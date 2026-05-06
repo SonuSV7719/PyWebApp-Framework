@@ -53,5 +53,11 @@ export default defineConfig({
     // Dev server config (used during development only)
     port: 5173,
     open: false,
+    // Bind to all interfaces so Android emulators, physical devices,
+    // and ADB reverse tunnels can all reach the server reliably.
+    host: true,
+    // Vite v6+ strict host checking drops requests from unknown origins.
+    // 'all' ensures no silent ERR_EMPTY_RESPONSE failures.
+    allowedHosts: 'all',
   },
 });

@@ -52,8 +52,9 @@ class MainActivity : AppCompatActivity() {
         //   - BroadcastReceiver listens for reload signals
         private val DEV_MODE = BuildConfig.DEBUG  // Auto-detect based on build type
 
-        // Vite dev server URL (use 10.0.2.2 for emulator, or your machine's IP)
-        private const val DEV_SERVER_URL = "http://localhost:5173"
+        // Vite dev server URL — 10.0.2.2 is Android emulator's alias for host machine.
+        // Works reliably because vite.config.js binds to 0.0.0.0 with allowedHosts:'all'.
+        private const val DEV_SERVER_URL = "http://10.0.2.2:5173"
 
         // Production frontend URL (Virtual domain managed by WebViewAssetLoader)
         private const val PROD_FRONTEND_URL = "https://appassets.android.com/web/index.html"
