@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { call, getPlatform, pickFile, requestPermission, PERMISSIONS, showToast } from 'pywebapp-bridge';
+import { call, getPlatform, pickFile } from 'pywebapp-bridge';
 import './App.css';
 
 // Generic card component for the dashboard
