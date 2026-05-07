@@ -41,15 +41,14 @@ class PythonBridge(
     private val mainHandler = Handler(Looper.getMainLooper())
 
     init {
-        // Initialize Python context on a background thread
+        // 1. Initialize remaining Python context on a background thread
         executor.execute {
             try {
-                // 1. Fetch and set the system environment
+                // Fetch and set the system environment
                 val contextJson = getSystemEnv()
                 apiModule.callAttr("set_context", contextJson)
                 
-                // 2. ⚡ REGISTER NATIVE CALLBACKS: 
-                // We inject a native Java function into the Python registry
+                // ⚡ REGISTER NATIVE CALLBACKS: 
                 val py = Python.getInstance()
                 val registry = py.getModule("pywebapp.core.registry")
                 val methodRegistry = registry["method_registry"]
@@ -163,33 +162,37 @@ class PythonBridge(
      * This copies the selected file into the app's cache directory so Python can read it
      * directly from the hard drive (bypassing Base64 JSON strings for massive files).
      */
+    /**
+     * UNIVERSAL UTILITY: Resolve an Android Scoped Storage URI into an absolute file path.
+     */
     @JavascriptInterface
     fun cacheUriToFile(uriString: String, callbackId: String) {
         executor.execute {
             try {
                 val uri = android.net.Uri.parse(uriString)
-                val inputStream = context.contentResolver.openInputStream(uri)
-                
-                // Try to get original file name
-                var fileName = "cached_file_" + System.currentTimeMillis()
-                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    if (cursor.moveToFirst()) {
-                        val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                        if (nameIndex != -1) {
-                            fileName = cursor.getString(nameIndex)
+                // FIXED: BUG 3 — Wrap inputStream in .use {} to ensure it is closed
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    // Try to get original file name
+                    var fileName = "cached_file_" + System.currentTimeMillis()
+                    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                        if (cursor.moveToFirst()) {
+                            val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                            if (nameIndex != -1) {
+                                fileName = cursor.getString(nameIndex)
+                            }
                         }
                     }
+                    
+                    val tempFile = java.io.File(context.cacheDir, fileName)
+                    tempFile.outputStream().use { out ->
+                        inputStream.copyTo(out)
+                    }
+                    
+                    // Escape path for JSON
+                    val escapedPath = escapeJson(tempFile.absolutePath)
+                    val escapedName = escapeJson(fileName)
+                    sendResultToJs(callbackId, """{"success":true,"path":"$escapedPath","uri":"$uriString","name":"$escapedName"}""")
                 }
-                
-                val tempFile = java.io.File(context.cacheDir, fileName)
-                tempFile.outputStream().use { out ->
-                    inputStream?.copyTo(out)
-                }
-                
-                // Escape path for JSON
-                val escapedPath = escapeJson(tempFile.absolutePath)
-                val escapedName = escapeJson(fileName)
-                sendResultToJs(callbackId, """{"success":true,"path":"$escapedPath","uri":"$uriString","name":"$escapedName"}""")
             } catch (e: Exception) {
                 Log.e(TAG, "Cache error", e)
                 val errorMsg = escapeJson(e.message ?: "Unknown error")
@@ -200,24 +203,27 @@ class PythonBridge(
 
     /**
      * UNIVERSAL UTILITY: Convert any Android URI to Base64 for easy viewing in WebView.
-     * This is the scalable way to handle images/files picked from the system.
      */
     @JavascriptInterface
     fun getBase64FromUri(uriString: String, callbackId: String) {
         executor.execute {
+            var bitmap: android.graphics.Bitmap? = null
             try {
                 val uri = android.net.Uri.parse(uriString)
-                // Open stream directly in decodeStream to avoid unused variable warning
-                // val inputStream = context.contentResolver.openInputStream(uri)
+                
+                // FIXED: BUG 4 — Read stream once into ByteArray to prevent null results on re-opening
+                val bytesData = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                if (bytesData == null) {
+                    sendResultToJs(callbackId, """{"success":false,"error":"Failed to read stream"}""")
+                    return@execute
+                }
                 
                 // --- SMART DOWNSCALING ---
-                // Load dimensions first to avoid memory crash
                 val options = android.graphics.BitmapFactory.Options().apply {
                     inJustDecodeBounds = true
                 }
-                android.graphics.BitmapFactory.decodeStream(context.contentResolver.openInputStream(uri), null, options)
+                android.graphics.BitmapFactory.decodeByteArray(bytesData, 0, bytesData.size, options)
                 
-                // Calculate scaling factor (Max 1024px for speed/memory)
                 val maxDim = 1024
                 var inSampleSize = 1
                 if (options.outHeight > maxDim || options.outWidth > maxDim) {
@@ -228,60 +234,67 @@ class PythonBridge(
                     }
                 }
                 
-                // Decode with scaling
                 val decodeOptions = android.graphics.BitmapFactory.Options().apply {
                     inSampleSize = inSampleSize
                 }
-                val bitmap = android.graphics.BitmapFactory.decodeStream(context.contentResolver.openInputStream(uri), null, decodeOptions)
+                bitmap = android.graphics.BitmapFactory.decodeByteArray(bytesData, 0, bytesData.size, decodeOptions)
                 
-                // Compress to JPEG for smallest Base64 size
                 val outputStream = java.io.ByteArrayOutputStream()
                 bitmap?.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, outputStream)
-                val bytes = outputStream.toByteArray()
+                val finalBytes = outputStream.toByteArray()
                 
-                val base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+                val base64 = android.util.Base64.encodeToString(finalBytes, android.util.Base64.NO_WRAP)
                 sendResultToJs(callbackId, """{"success":true,"base64":"data:image/jpeg;base64,$base64"}""")
             } catch (e: Exception) {
                 Log.e(TAG, "Base64 conversion error", e)
-                sendResultToJs(callbackId, """{"success":false,"error":"Failed to read file: ${e.message}"}""")
+                // FIXED: BUG 5 — Wrap e.message with escapeJson()
+                val errorMsg = escapeJson(e.message ?: "Unknown error")
+                sendResultToJs(callbackId, """{"success":false,"error":"Failed to read file: $errorMsg"}""")
+            } finally {
+                // FIXED: BUG 2 — Recycle bitmap to prevent native memory leak
+                bitmap?.recycle()
             }
         }
     }
 
     /**
      * Main IPC entry point. Called from JavaScript.
-     *
-     * @param method     Name of the Python function to call.
-     * @param paramsJson JSON string of the parameters array.
-     * @param callbackId Unique callback ID for resolving the JS Promise.
      */
     @JavascriptInterface
     fun call(method: String, paramsJson: String, callbackId: String) {
-        // 🔒 P0 Security: Sanitize callbackId to prevent XSS injection
         val safeCallbackId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
         Log.d(TAG, "call: method='$method', params=$paramsJson, callback=$safeCallbackId")
 
-        executor.execute {
-            var resultJson: String
+        // FIXED: BUG 8 — Add timeout to background Python calls
+        val future = executor.submit {
             try {
-                // Call Python's dispatch_json(method, params_json)
                 val pyResult: PyObject = apiModule.callAttr("dispatch_json", method, paramsJson)
-                resultJson = pyResult.toString()
-                Log.d(TAG, "Python result: ${resultJson.take(200)}")
+                val resultJson = pyResult.toString()
+                sendResultToJs(safeCallbackId, resultJson)
             } catch (e: Exception) {
                 Log.e(TAG, "Python execution error", e)
-                // 🔒 P0 Security: Escape both error AND method to prevent JSON injection
-                resultJson = """{"success":false,"error":"Android bridge error: ${escapeJson(e.message ?: "Unknown error")}","method":"${escapeJson(method)}"}"""
+                val errorMsg = escapeJson(e.message ?: "Unknown error")
+                val resultJson = """{"success":false,"error":"Android bridge error: $errorMsg","method":"${escapeJson(method)}"}"""
+                sendResultToJs(safeCallbackId, resultJson)
             }
+        }
 
-            // Send result back to JavaScript on the UI thread
-            sendResultToJs(safeCallbackId, resultJson)
+        executor.execute {
+            try {
+                future.get(30, java.util.concurrent.TimeUnit.SECONDS)
+            } catch (e: java.util.concurrent.TimeoutException) {
+                future.cancel(true)
+                Log.e(TAG, "Python call timed out: $method")
+                val resultJson = """{"success":false,"error":"Python call timed out after 30s","method":"${escapeJson(method)}"}"""
+                sendResultToJs(safeCallbackId, resultJson)
+            } catch (e: Exception) {
+                Log.e(TAG, "Future execution error", e)
+            }
         }
     }
 
     /**
      * Synchronous version for simple calls (e.g., ping).
-     * Runs Python on the calling thread — use only for fast operations.
      */
     @JavascriptInterface
     fun callSync(method: String, paramsJson: String): String {
@@ -291,7 +304,6 @@ class PythonBridge(
             pyResult.toString()
         } catch (e: Exception) {
             Log.e(TAG, "callSync error", e)
-            // 🔒 P0 Security: Escape method to prevent JSON injection
             """{"success":false,"error":"${escapeJson(e.message ?: "Unknown error")}","method":"${escapeJson(method)}"}"""
         }
     }
@@ -300,10 +312,15 @@ class PythonBridge(
      * Send a result back to JavaScript by evaluating a callback function.
      */
     internal fun sendResultToJs(callbackId: String, resultJson: String) {
-        // 🔒 P0 Security: Re-sanitize callbackId at the delivery point
+        // FIXED: BUG 7 — Activity lifecycle guard
+        val activity = context as? MainActivity
+        if (activity == null || activity.isDestroyed || activity.isFinishing) {
+            Log.w(TAG, "Activity destroyed, dropping result for $callbackId")
+            return
+        }
+
         val safeId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
 
-        // --- Universal Support for Python-only requests ---
         if (safeId == "internal_python_callback") {
             try {
                 val py = Python.getInstance()

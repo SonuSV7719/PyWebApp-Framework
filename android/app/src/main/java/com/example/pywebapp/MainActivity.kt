@@ -41,59 +41,49 @@ class MainActivity : AppCompatActivity() {
     private lateinit var assetLoader: WebViewAssetLoader
     private var devReloadReceiver: DevReloadReceiver? = null
 
+    // FIXED: BUG 1 — Use ConcurrentHashMap to prevent race conditions
+    private val pendingCallbacks = java.util.concurrent.ConcurrentHashMap<String, String>()
+
     companion object {
         private const val TAG = "PyWebApp"
 
         // ─── Dev Mode Configuration ─────────────────────────────
-        // Automatically enabled for Debug builds.
-        // In dev mode:
-        //   - Frontend loads from Vite dev server (HMR)
-        //   - Python loads from /data/local/tmp/pywebapp/python/ (ADB push)
-        //   - BroadcastReceiver listens for reload signals
-        private val DEV_MODE = BuildConfig.DEBUG  // Auto-detect based on build type
-
-        // Vite dev server URL — 10.0.2.2 is Android emulator's alias for host machine.
-        // Works reliably because vite.config.js binds to 0.0.0.0 with allowedHosts:'all'.
+        private val DEV_MODE = BuildConfig.DEBUG
         private const val DEV_SERVER_URL = "http://10.0.2.2:5173"
-
-        // Production frontend URL (Virtual domain managed by WebViewAssetLoader)
         private const val PROD_FRONTEND_URL = "https://appassets.android.com/web/index.html"
-
-        // Dev mode: where ADB-pushed Python files live on the device
         private const val DEV_PYTHON_DIR = "/data/local/tmp/pywebapp/python"
     }
 
     // 📸 MODERN PHOTO PICKER: The smooth, flicker-free way to pick images
     private val photoPicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        pendingCallbackId?.let { cbId ->
+        // FIXED: BUG 1 — Read and clear only its own key
+        pendingCallbacks.remove("photo")?.let { cbId ->
             if (uri != null) {
                 pythonBridge.sendResultToJs(cbId, """{"success":true,"uri":"$uri"}""")
             } else {
                 pythonBridge.sendResultToJs(cbId, """{"success":false,"error":"No image selected"}""")
             }
-            pendingCallbackId = null
         }
     }
 
     // 🔐 UNIVERSAL PERMISSION LAUNCHER: Real-time Allow/Deny popup
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        pendingCallbackId?.let { cbId ->
+        // FIXED: BUG 1 — Read and clear only its own key
+        pendingCallbacks.remove("permission")?.let { cbId ->
             pythonBridge.sendResultToJs(cbId, """{"success":true,"granted":$isGranted}""")
-            pendingCallbackId = null
         }
     }
 
     // UNIVERSAL HUB: Generic launcher for any Android Intent (Picking files, images, etc.)
-    private var pendingCallbackId: String? = null
     private val universalLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        pendingCallbackId?.let { cbId ->
+        // FIXED: BUG 1 — Read and clear only its own key
+        pendingCallbacks.remove("universal")?.let { cbId ->
             if (result.resultCode == RESULT_OK) {
                 val data = result.data?.data?.toString() ?: ""
                 pythonBridge.sendResultToJs(cbId, """{"success":true,"uri":"$data"}""")
             } else {
                 pythonBridge.sendResultToJs(cbId, """{"success":false,"error":"User cancelled"}""")
             }
-            pendingCallbackId = null
         }
     }
 
@@ -102,7 +92,8 @@ class MainActivity : AppCompatActivity() {
      */
     fun launchUniversalPicker(intent: Intent, callbackId: String) {
         runOnUiThread {
-            this.pendingCallbackId = callbackId
+            // FIXED: BUG 10 — Sanitize callbackId
+            this.pendingCallbacks["universal"] = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
             universalLauncher.launch(intent)
         }
     }
@@ -110,9 +101,11 @@ class MainActivity : AppCompatActivity() {
     /**
      * REAL PERMISSION REQUEST: Shows the Android system popup
      */
+    @androidx.annotation.Keep
     fun requestRuntimePermission(permission: String, callbackId: String) {
         runOnUiThread {
-            this.pendingCallbackId = callbackId
+            // FIXED: BUG 10 — Sanitize callbackId
+            this.pendingCallbacks["permission"] = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
             permissionLauncher.launch(permission)
         }
     }
@@ -129,6 +122,18 @@ class MainActivity : AppCompatActivity() {
         // Setup WebView
         webView = findViewById(R.id.webView)
         setupWebView()
+
+        // FIXED: BUG 9 — Replace deprecated onBackPressed
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
 
         // 🚀 Setup Splash Overlay
         showSplashOverlay()
@@ -186,14 +191,21 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Initialize the Chaquopy Python interpreter.
-     *
-     * In dev mode, also prepends the ADB push directory to sys.path
-     * so updated Python files take priority over bundled ones.
      */
     private fun initPython() {
         if (!Python.isStarted()) {
             Python.start(AndroidPlatform(this))
             Log.i(TAG, "Python runtime initialized")
+        }
+
+        // Register this exact MainActivity instance into the Python framework context
+        try {
+            val py = Python.getInstance()
+            val frameworkContext = py.getModule("pywebapp.core.context")
+            frameworkContext.callAttr("set_activity", this)
+            Log.i(TAG, "MainActivity instance directly registered in Python context")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to register MainActivity in Python context", e)
         }
 
         if (DEV_MODE) {
@@ -229,19 +241,23 @@ class MainActivity : AppCompatActivity() {
             // Enable DOM storage (React may use localStorage)
             domStorageEnabled = true
 
-            // Allow file access (standard settings)
-            allowFileAccess = true
-            allowContentAccess = true
-            
             // Performance optimizations
             setSupportZoom(false)
             builtInZoomControls = false
 
             if (DEV_MODE) {
+                // FIXED: BUG 6 — Allow file access only in dev mode
+                allowFileAccess = true
+                allowContentAccess = true
+                
                 // Allow mixed content in dev mode (HTTP dev server)
                 mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                 cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
             } else {
+                // FIXED: BUG 6 — Disable for production security
+                allowFileAccess = false
+                allowContentAccess = false
+
                 mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
                 cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
             }
@@ -326,7 +342,6 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Register the dev reload BroadcastReceiver.
-     * Listens for reload signals from the dev_sync.py script.
      */
     private fun registerDevReloadReceiver() {
         devReloadReceiver = DevReloadReceiver()
@@ -343,24 +358,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Handle back button — navigate WebView history before exiting.
-     */
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            @Suppress("DEPRECATION")
-            super.onBackPressed()
-        }
-    }
-
-    /**
      * Trigger the native image picker (Flicker-Free Version).
      */
     fun openImagePicker(callbackId: String) {
         runOnUiThread {
-            this.pendingCallbackId = callbackId
+            // FIXED: BUG 10 — Sanitize callbackId
+            this.pendingCallbacks["photo"] = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
             photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
     }
