@@ -24,15 +24,6 @@ import com.example.pywebapp.dev.DevReloadReceiver
 
 /**
  * MainActivity — Hosts the WebView and initializes the Python runtime.
- *
- * Supports two modes:
- *   - Production: loads frontend from bundled assets, Python from APK
- *   - Dev mode: loads frontend from Vite dev server (HMR), Python reloads via ADB push
- *
- * Architecture:
- *   WebView loads React frontend
- *   PythonBridge registered as "NativeBridge" JavascriptInterface
- *   JS calls → PythonBridge → Chaquopy → Python handlers → callback to JS
  */
 class MainActivity : AppCompatActivity() {
 
@@ -41,8 +32,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var assetLoader: WebViewAssetLoader
     private var devReloadReceiver: DevReloadReceiver? = null
 
-    // FIXED: BUG 1 — Use ConcurrentHashMap to prevent race conditions
-    private val pendingCallbacks = java.util.concurrent.ConcurrentHashMap<String, String>()
+    // FIXED: BUG 1 — Use ArrayDeque to handle multiple concurrent calls per type
+    private val pendingCallbacks = java.util.concurrent.ConcurrentHashMap<String, java.util.ArrayDeque<String>>()
 
     companion object {
         private const val TAG = "PyWebApp"
@@ -56,8 +47,8 @@ class MainActivity : AppCompatActivity() {
 
     // 📸 MODERN PHOTO PICKER: The smooth, flicker-free way to pick images
     private val photoPicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        // FIXED: BUG 1 — Read and clear only its own key
-        pendingCallbacks.remove("photo")?.let { cbId ->
+        // FIXED: BUG 1 — Remove and process first in queue
+        pendingCallbacks["photo"]?.removeFirstOrNull()?.let { cbId ->
             if (uri != null) {
                 pythonBridge.sendResultToJs(cbId, """{"success":true,"uri":"$uri"}""")
             } else {
@@ -68,16 +59,16 @@ class MainActivity : AppCompatActivity() {
 
     // 🔐 UNIVERSAL PERMISSION LAUNCHER: Real-time Allow/Deny popup
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        // FIXED: BUG 1 — Read and clear only its own key
-        pendingCallbacks.remove("permission")?.let { cbId ->
+        // FIXED: BUG 1 — Remove and process first in queue
+        pendingCallbacks["permission"]?.removeFirstOrNull()?.let { cbId ->
             pythonBridge.sendResultToJs(cbId, """{"success":true,"granted":$isGranted}""")
         }
     }
 
     // UNIVERSAL HUB: Generic launcher for any Android Intent (Picking files, images, etc.)
     private val universalLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        // FIXED: BUG 1 — Read and clear only its own key
-        pendingCallbacks.remove("universal")?.let { cbId ->
+        // FIXED: BUG 1 — Remove and process first in queue
+        pendingCallbacks["universal"]?.removeFirstOrNull()?.let { cbId ->
             if (result.resultCode == RESULT_OK) {
                 val data = result.data?.data?.toString() ?: ""
                 pythonBridge.sendResultToJs(cbId, """{"success":true,"uri":"$data"}""")
@@ -92,8 +83,9 @@ class MainActivity : AppCompatActivity() {
      */
     fun launchUniversalPicker(intent: Intent, callbackId: String) {
         runOnUiThread {
-            // FIXED: BUG 10 — Sanitize callbackId
-            this.pendingCallbacks["universal"] = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
+            // FIXED: BUG 1 — Sanitize and enqueue atomically
+            val safeId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
+            pendingCallbacks.computeIfAbsent("universal") { java.util.ArrayDeque() }.addLast(safeId)
             universalLauncher.launch(intent)
         }
     }
@@ -104,8 +96,9 @@ class MainActivity : AppCompatActivity() {
     @androidx.annotation.Keep
     fun requestRuntimePermission(permission: String, callbackId: String) {
         runOnUiThread {
-            // FIXED: BUG 10 — Sanitize callbackId
-            this.pendingCallbacks["permission"] = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
+            // FIXED: BUG 1 — Sanitize and enqueue atomically
+            val safeId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
+            pendingCallbacks.computeIfAbsent("permission") { java.util.ArrayDeque() }.addLast(safeId)
             permissionLauncher.launch(permission)
         }
     }
@@ -362,8 +355,9 @@ class MainActivity : AppCompatActivity() {
      */
     fun openImagePicker(callbackId: String) {
         runOnUiThread {
-            // FIXED: BUG 10 — Sanitize callbackId
-            this.pendingCallbacks["photo"] = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
+            // FIXED: BUG 1 — Sanitize and enqueue atomically
+            val safeId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
+            pendingCallbacks.computeIfAbsent("photo") { java.util.ArrayDeque() }.addLast(safeId)
             photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
     }
@@ -372,6 +366,8 @@ class MainActivity : AppCompatActivity() {
         devReloadReceiver?.let {
             try { unregisterReceiver(it) } catch (_: Exception) {}
         }
+        // FIXED: CLEANUP — Shut down thread pools to prevent resource leaks
+        if (::pythonBridge.isInitialized) pythonBridge.shutdown()
         webView.destroy()
         super.onDestroy()
     }

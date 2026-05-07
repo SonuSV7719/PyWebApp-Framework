@@ -32,13 +32,43 @@ class PythonBridge(
     companion object {
         private const val TAG = "PythonBridge"
         private const val THREAD_POOL_SIZE = 4
+
+        // App-specific: add your required permissions here
+        // FIXED: BUG 11 — Security Whitelist for permissions
+        private val ALLOWED_PERMISSIONS = setOf(
+            "android.permission.CAMERA",
+            "android.permission.READ_MEDIA_IMAGES",
+            "android.permission.ACCESS_FINE_LOCATION",
+            "android.permission.RECORD_AUDIO"
+        )
+
+        // App-specific: add your required intent actions here
+        // FIXED: BUG 12 — Security Whitelist for intent actions
+        private val ALLOWED_INTENT_ACTIONS = setOf(
+            android.content.Intent.ACTION_OPEN_DOCUMENT,
+            android.content.Intent.ACTION_GET_CONTENT,
+            android.provider.MediaStore.ACTION_IMAGE_CAPTURE,
+            android.content.Intent.ACTION_SEND
+        )
     }
 
-    // Background thread pool for Python execution (never block the UI thread)
+    // Background thread pool for Python execution
     private val executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE)
 
-    // Main thread handler for evaluateJavascript (must run on UI thread)
+    // FIXED: BUG 8 — Dedicated scheduler for timeouts to prevent deadlocks
+    private val timeoutScheduler = Executors.newScheduledThreadPool(1)
+
+    // Main thread handler for evaluateJavascript
     private val mainHandler = Handler(Looper.getMainLooper())
+
+    /**
+     * CLEAN SHUTDOWN: Ensures no leaking threads when activity is destroyed
+     */
+    fun shutdown() {
+        // FIXED: BUG 8 — Proper shutdown of all pools
+        executor.shutdownNow()
+        timeoutScheduler.shutdownNow()
+    }
 
     init {
         // 1. Initialize remaining Python context on a background thread
@@ -103,6 +133,13 @@ class PythonBridge(
      */
     @JavascriptInterface
     fun requestPermission(permission: String, callbackId: String) {
+        // FIXED: BUG 11 — Block unauthorized permission requests
+        if (permission !in ALLOWED_PERMISSIONS) {
+            Log.w(TAG, "Blocked unauthorized permission request: $permission")
+            sendResultToJs(callbackId, """{"success":false,"error":"Permission not allowed"}""")
+            return
+        }
+
         val permissionStatus = androidx.core.content.ContextCompat.checkSelfPermission(context, permission)
         
         if (permissionStatus == android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -125,11 +162,16 @@ class PythonBridge(
 
     /**
      * UNIVERSAL INTENT LAUNCHER (God Mode):
-     * Allows Python/JS to trigger ANY Android action (Camera, Contacts, File Manager)
-     * without ever touching Kotlin again.
      */
     @JavascriptInterface
     fun launchIntent(action: String, type: String?, callbackId: String) {
+        // FIXED: BUG 12 — Block unauthorized intent actions
+        if (action !in ALLOWED_INTENT_ACTIONS) {
+            Log.w(TAG, "Blocked unauthorized intent: $action")
+            sendResultToJs(callbackId, """{"success":false,"error":"Intent action not allowed"}""")
+            return
+        }
+
         val intent = android.content.Intent(action)
         if (type != null) intent.type = type
         (context as? MainActivity)?.launchUniversalPicker(intent, callbackId)
@@ -159,19 +201,20 @@ class PythonBridge(
 
     /**
      * UNIVERSAL UTILITY: Resolve an Android Scoped Storage URI into an absolute file path.
-     * This copies the selected file into the app's cache directory so Python can read it
-     * directly from the hard drive (bypassing Base64 JSON strings for massive files).
-     */
-    /**
-     * UNIVERSAL UTILITY: Resolve an Android Scoped Storage URI into an absolute file path.
      */
     @JavascriptInterface
     fun cacheUriToFile(uriString: String, callbackId: String) {
         executor.execute {
             try {
                 val uri = android.net.Uri.parse(uriString)
-                // FIXED: BUG 3 — Wrap inputStream in .use {} to ensure it is closed
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                // FIXED: BUG 3 — Ensure stream is closed
+                val stream = context.contentResolver.openInputStream(uri)
+                if (stream == null) {
+                    sendResultToJs(callbackId, """{"success":false,"error":"Could not open file stream"}""")
+                    return@execute
+                }
+
+                stream.use { inputStream ->
                     // Try to get original file name
                     var fileName = "cached_file_" + System.currentTimeMillis()
                     context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
@@ -265,7 +308,7 @@ class PythonBridge(
         val safeCallbackId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
         Log.d(TAG, "call: method='$method', params=$paramsJson, callback=$safeCallbackId")
 
-        // FIXED: BUG 8 — Add timeout to background Python calls
+        // FIXED: BUG 8 — Use dedicated scheduler for timeout to prevent deadlocks
         val future = executor.submit {
             try {
                 val pyResult: PyObject = apiModule.callAttr("dispatch_json", method, paramsJson)
@@ -279,18 +322,15 @@ class PythonBridge(
             }
         }
 
-        executor.execute {
-            try {
-                future.get(30, java.util.concurrent.TimeUnit.SECONDS)
-            } catch (e: java.util.concurrent.TimeoutException) {
+        // FIXED: BUG 8 — Schedule timeout watcher on the dedicated scheduler
+        timeoutScheduler.schedule({
+            if (!future.isDone) {
                 future.cancel(true)
                 Log.e(TAG, "Python call timed out: $method")
                 val resultJson = """{"success":false,"error":"Python call timed out after 30s","method":"${escapeJson(method)}"}"""
                 sendResultToJs(safeCallbackId, resultJson)
-            } catch (e: Exception) {
-                Log.e(TAG, "Future execution error", e)
             }
-        }
+        }, 30, java.util.concurrent.TimeUnit.SECONDS)
     }
 
     /**
