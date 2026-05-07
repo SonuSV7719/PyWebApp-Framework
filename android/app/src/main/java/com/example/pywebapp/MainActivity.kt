@@ -101,16 +101,20 @@ class MainActivity : AppCompatActivity() {
      * UNIVERSAL PICKER: Trigger any pick intent from the bridge
      */
     fun launchUniversalPicker(intent: Intent, callbackId: String) {
-        this.pendingCallbackId = callbackId
-        universalLauncher.launch(intent)
+        runOnUiThread {
+            this.pendingCallbackId = callbackId
+            universalLauncher.launch(intent)
+        }
     }
 
     /**
      * REAL PERMISSION REQUEST: Shows the Android system popup
      */
     fun requestRuntimePermission(permission: String, callbackId: String) {
-        this.pendingCallbackId = callbackId
-        permissionLauncher.launch(permission)
+        runOnUiThread {
+            this.pendingCallbackId = callbackId
+            permissionLauncher.launch(permission)
+        }
     }
 
     private var splashLayout: android.view.View? = null
@@ -355,8 +359,10 @@ class MainActivity : AppCompatActivity() {
      * Trigger the native image picker (Flicker-Free Version).
      */
     fun openImagePicker(callbackId: String) {
-        this.pendingCallbackId = callbackId
-        photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        runOnUiThread {
+            this.pendingCallbackId = callbackId
+            photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        }
     }
 
     override fun onDestroy() {
