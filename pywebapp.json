@@ -14,8 +14,8 @@
     "window_height": 720
   },
   "cors_origins": [
-    "http://localhost:*",
-    "http://127.0.0.1:*",
-    "http://[::1]:*"
+    "http://localhost:.*",
+    "http://127.0.0.1:.*",
+    "http://\\[::1\\]:.*"
   ]
 }
