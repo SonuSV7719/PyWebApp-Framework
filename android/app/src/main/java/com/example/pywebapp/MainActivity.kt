@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
     // 📸 MODERN PHOTO PICKER: The smooth, flicker-free way to pick images
     private val photoPicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         // FIXED: BUG 1 — Remove and process first in queue
-        pendingCallbacks["photo"]?.removeFirstOrNull()?.let { cbId ->
+        pendingCallbacks["photo"]?.pollFirst()?.let { cbId ->
             if (uri != null) {
                 pythonBridge.sendResultToJs(cbId, """{"success":true,"uri":"$uri"}""")
             } else {
@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
     // 🔐 UNIVERSAL PERMISSION LAUNCHER: Real-time Allow/Deny popup
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         // FIXED: BUG 1 — Remove and process first in queue
-        pendingCallbacks["permission"]?.removeFirstOrNull()?.let { cbId ->
+        pendingCallbacks["permission"]?.pollFirst()?.let { cbId ->
             pythonBridge.sendResultToJs(cbId, """{"success":true,"granted":$isGranted}""")
         }
     }
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
     // UNIVERSAL HUB: Generic launcher for any Android Intent (Picking files, images, etc.)
     private val universalLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         // FIXED: BUG 1 — Remove and process first in queue
-        pendingCallbacks["universal"]?.removeFirstOrNull()?.let { cbId ->
+        pendingCallbacks["universal"]?.pollFirst()?.let { cbId ->
             if (result.resultCode == RESULT_OK) {
                 val data = result.data?.data?.toString() ?: ""
                 pythonBridge.sendResultToJs(cbId, """{"success":true,"uri":"$data"}""")
