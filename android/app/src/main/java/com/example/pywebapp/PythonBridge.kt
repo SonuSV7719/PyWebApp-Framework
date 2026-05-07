@@ -303,13 +303,6 @@ class PythonBridge(
         // 🔒 P0 Security: Re-sanitize callbackId at the delivery point
         val safeId = callbackId.replace(Regex("[^a-zA-Z0-9_]"), "")
 
-        // Escape the JSON for safe embedding in JavaScript string
-        val escapedJson = resultJson
-            .replace("\\", "\\\\")
-            .replace("'", "\\'")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-
         // --- Universal Support for Python-only requests ---
         if (safeId == "internal_python_callback") {
             try {
@@ -327,7 +320,7 @@ class PythonBridge(
         val js = "window.__resolveCallback('$safeId', $resultJson)"
         val task = {
             val startTime = System.currentTimeMillis()
-            webView.evaluateJavascript(js) { value ->
+            webView.evaluateJavascript(js) { _ ->
                 val duration = System.currentTimeMillis() - startTime
                 Log.d("PyWebApp.Bridge", "🌐 [JS-Update] Script executed in ${duration}ms for $safeId")
             }

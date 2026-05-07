@@ -32,3 +32,5 @@ Thumbs.db
 # Separate package repos (not part of this template)
 packages/
 local_data/
+# Auto-generated Android Python source sync
+android/app/src/main/python/

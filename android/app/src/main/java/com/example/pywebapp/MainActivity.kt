@@ -67,9 +67,9 @@ class MainActivity : AppCompatActivity() {
     private val photoPicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         pendingCallbackId?.let { cbId ->
             if (uri != null) {
-                pythonBridge?.sendResultToJs(cbId, """{"success":true,"uri":"$uri"}""")
+                pythonBridge.sendResultToJs(cbId, """{"success":true,"uri":"$uri"}""")
             } else {
-                pythonBridge?.sendResultToJs(cbId, """{"success":false,"error":"No image selected"}""")
+                pythonBridge.sendResultToJs(cbId, """{"success":false,"error":"No image selected"}""")
             }
             pendingCallbackId = null
         }
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
     // 🔐 UNIVERSAL PERMISSION LAUNCHER: Real-time Allow/Deny popup
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         pendingCallbackId?.let { cbId ->
-            pythonBridge?.sendResultToJs(cbId, """{"success":true,"granted":$isGranted}""")
+            pythonBridge.sendResultToJs(cbId, """{"success":true,"granted":$isGranted}""")
             pendingCallbackId = null
         }
     }
@@ -89,9 +89,9 @@ class MainActivity : AppCompatActivity() {
         pendingCallbackId?.let { cbId ->
             if (result.resultCode == RESULT_OK) {
                 val data = result.data?.data?.toString() ?: ""
-                pythonBridge?.sendResultToJs(cbId, """{"success":true,"uri":"$data"}""")
+                pythonBridge.sendResultToJs(cbId, """{"success":true,"uri":"$data"}""")
             } else {
-                pythonBridge?.sendResultToJs(cbId, """{"success":false,"error":"User cancelled"}""")
+                pythonBridge.sendResultToJs(cbId, """{"success":false,"error":"User cancelled"}""")
             }
             pendingCallbackId = null
         }
@@ -244,6 +244,7 @@ class MainActivity : AppCompatActivity() {
 
             // Disable system-wide Force Dark to preserve our custom gradients
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                @Suppress("DEPRECATION")
                 forceDark = android.webkit.WebSettings.FORCE_DARK_OFF
             }
         }
@@ -289,6 +290,7 @@ class MainActivity : AppCompatActivity() {
                 return assetLoader.shouldInterceptRequest(Uri.parse(url))
             }
 
+            @Suppress("DEPRECATION", "OverridingDeprecatedMember")
             override fun onReceivedError(
                 view: WebView,
                 errorCode: Int,
