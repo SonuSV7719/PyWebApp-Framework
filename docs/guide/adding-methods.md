@@ -22,6 +22,28 @@ const result = await call('circle_area', [5.0]);
 // result = { success: true, result: 78.539..., method: 'circle_area' }
 ```
 
+## ⚡ Asynchronous Handlers (v2.4.0)
+
+You can also register **`async`** functions. This is recommended for long-running tasks (like API calls or AI processing) to avoid blocking the Python event loop.
+
+```python
+# In backend/handlers.py
+import asyncio
+from .registry import register
+
+@register(description="Perform a long-running task")
+async def fetch_data_async(user_id: int):
+    # Simulate a network delay
+    await asyncio.sleep(2) 
+    return {"user_id": user_id, "status": "verified"}
+```
+
+Call it the exact same way from React:
+```javascript
+const response = await call('fetch_data_async', [101]);
+// After 2 seconds: { success: true, result: { user_id: 101, status: "verified" } }
+```
+
 ## How It Works
 
 1. `@register()` adds the function to the global `MethodRegistry` singleton

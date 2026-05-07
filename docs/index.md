@@ -3,7 +3,7 @@
 Welcome to the **PyWebApp Native v2.4.0** documentation. This framework is designed for high-performance, cross-platform application development with a focus on professional branding and thread-safe logic.
 
 ### 🗺️ Explore the Framework
-[🚀 Quick Start](#-quick-start-30-seconds) | [📋 Prerequisites](./guide/prerequisites) | [⌨️ CLI Reference](./guide/cli) | [🏗️ Architecture](./guide/architecture)
+[🚀 Quick Start](#-quick-start-30-seconds) | [📋 Prerequisites](./guide/prerequisites) | [⌨️ CLI Reference](./guide/cli) | [🏗️ Architecture](./guide/architecture) | [⚡ Async Support](./guide/async-support)
 
 ---
 
