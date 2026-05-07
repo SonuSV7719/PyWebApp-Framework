@@ -29,7 +29,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.pywebapp"
+        applicationId = "com.pywebapp.native"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

@@ -1,10 +1,4 @@
 """
-Android-side copy of backend/logger.py
-Auto-synced by scripts/build_android.py — DO NOT EDIT DIRECTLY.
-Source of truth: backend/logger.py
-"""
-
-"""
 Cross-platform logging utility.
 Provides a rotating file logger with console output.
 Automatically selects platform-appropriate log directories.

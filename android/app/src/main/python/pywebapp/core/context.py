@@ -1,17 +1,11 @@
 """
-Android-side copy of backend/context.py
-Auto-synced by scripts/build_android.py — DO NOT EDIT DIRECTLY.
-Source of truth: backend/context.py
-"""
-
-"""
 Python Environment Context.
 Stores Android-specific information provided by the native bridge.
 Separated from api.py to avoid circular imports.
 """
 from typing import Any, Dict
 
-_context: Dict[str, Any] = {}
+_context = {}  # type: Dict[str, Any]
 
 def set_context(data: Dict[str, Any]) -> None:
     """Set the global context."""

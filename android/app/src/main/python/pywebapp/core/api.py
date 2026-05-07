@@ -1,18 +1,12 @@
 """
-Android-side copy of backend/api.py
-Auto-synced by scripts/build_android.py — DO NOT EDIT DIRECTLY.
-Source of truth: backend/api.py
-"""
-
-"""
 IPC API Dispatcher.
 Routes method calls from the native bridge to the appropriate handler function.
 This is the single entry point for all IPC communication.
 
 Architecture:
     The dispatcher uses the MethodRegistry singleton. Any function decorated with
-    @register in handlers.py (or any module that imports from registry) is
-    automatically available for IPC calls.
+    @register in the user's handlers.py (or any module) is automatically available
+    for IPC calls.
 
     To add a new method, you ONLY need to add @register() to your function.
     No changes needed in this file, the bridge, or any native code.
@@ -23,17 +17,33 @@ Usage:
 """
 
 import json
+import importlib
 import traceback
+import pkgutil
 from typing import Any, Dict, List, Optional
 
-import context
-from logger import get_logger
-from registry import method_registry
-
-# Import handlers to trigger @register decorators
-import handlers as _handlers  # noqa: F401
+from pywebapp.core import context
+from pywebapp.core.logger import get_logger
+from pywebapp.core.registry import method_registry
 
 logger = get_logger("api")
+
+# Track whether user handlers have been discovered
+_handlers_loaded = False
+
+
+def _discover_user_handlers():
+    """
+    Discover and import all user handlers.
+    Delegates to the centralized discovery engine.
+    """
+    global _handlers_loaded
+    if _handlers_loaded:
+        return
+
+    from pywebapp.core.discovery import discover_handlers
+    discover_handlers()
+    _handlers_loaded = True
 
 
 def set_context(data_json: str) -> None:
@@ -54,24 +64,32 @@ def get_context() -> Dict[str, Any]:
     return context.get_context()
 
 
+def hide_splash():
+    """
+    Signal the native side to hide the splash screen.
+    This is useful if you want to wait for backend initialization 
+    before showing the UI.
+    """
+    # We use a special internal method name that the bridge listens for
+    # or we can use the registry to store a "dismiss" signal.
+    from pywebapp.core.registry import method_registry
+    if "internal_hide_splash" in method_registry:
+        method_registry["internal_hide_splash"]()
+    else:
+        # Fallback: if not registered, we just log it
+        get_logger("api").info("🌊 Splash dismiss requested from Python")
+        # In a real bridge, we'd trigger a native call here.
+        # For now, we'll ensure the bridge registers this callback.
+
+
 def dispatch(method: str, params: Optional[List[Any]] = None) -> Dict[str, Any]:
     """
     Dispatch an IPC call to the appropriate handler.
-
-    This is the core routing function. All IPC calls from JS flow through here.
-    Methods are resolved from the global MethodRegistry.
-
-    Args:
-        method: Name of the method to call (must be registered via @register).
-        params: List of positional arguments to pass to the method.
-
-    Returns:
-        Dictionary with structure:
-        - success (bool): Whether the call succeeded.
-        - result (Any): Return value from the handler (on success).
-        - error (str): Error message (on failure).
-        - method (str): Echo of the called method name.
     """
+    # Ensure user handlers are discovered (fast path guard)
+    if not _handlers_loaded:
+        _discover_user_handlers()
+
     if params is None:
         params = []
 
@@ -167,6 +185,7 @@ def list_methods() -> Dict[str, str]:
     Returns a dictionary of all available methods and their descriptions.
     Delegates to the MethodRegistry.
     """
+    _discover_user_handlers()
     return method_registry.list_methods()
 
 
@@ -175,4 +194,5 @@ def get_schema() -> Dict[str, Any]:
     Returns a full schema of all registered methods with parameter info.
     Useful for generating documentation or client SDKs.
     """
+    _discover_user_handlers()
     return method_registry.get_schema()
