@@ -1,6 +1,6 @@
-# 🏛️ PyWebApp Native: The Official Guide (v2.3.0)
+# 🏛️ PyWebApp Native: The Official Guide (v2.4.0)
 
-Welcome to the **PyWebApp Native v2.3.0** documentation. This framework is designed for high-performance, cross-platform application development with a focus on professional branding and thread-safe logic.
+Welcome to the **PyWebApp Native v2.4.0** documentation. This framework is designed for high-performance, cross-platform application development with a focus on professional branding and thread-safe logic.
 
 ### 🗺️ Explore the Framework
 [🚀 Quick Start](#-quick-start-30-seconds) | [📋 Prerequisites](./guide/prerequisites) | [⌨️ CLI Reference](./guide/cli) | [🏗️ Architecture](./guide/architecture)
@@ -15,8 +15,8 @@ PyWebApp Native is the **Elite Tier** of cross-platform development. Most tradit
 
 ### 🚀 The "Killer" Advantages
 - **📉 Zero Learning Curve:** If you know Python and any Web framework, you already know 100% of PyWebApp. No proprietary UI languages to learn.
-- **🔒 Thread-Safe & Atomic:** (New in v2.3.0) A hardened IPC engine with a recursive locking system, ensuring your app never crashes under high concurrency.
-- **📂 High-Fidelity 1:1 Mirroring:** (New in v2.3.0) Your backend code structure is mirrored exactly 1:1 on the device, enabling standard native imports and cleaner code.
+- **🔒 Thread-Safe & Atomic:** (New in v2.4.0) A hardened IPC engine with a recursive locking system, ensuring your app never crashes under high concurrency.
+- **📂 High-Fidelity 1:1 Mirroring:** (New in v2.4.0) Your backend code structure is mirrored exactly 1:1 on the device, enabling standard native imports and cleaner code.
 - **🎨 Unlimited UI Power:** Use Tailwind, Framer Motion, or any modern web library. Your app will look like a 2026 flagship, not a legacy desktop tool.
 
 ### 🏗️ The Full Feature Set
@@ -28,7 +28,7 @@ PyWebApp Native is the **Elite Tier** of cross-platform development. Most tradit
 - **🛠️ Integrated Bridge:** Call Python from JS and JS from Python with simple `call()` and `register()` functions.
 
 #### 📱 Hardware & Native Capabilities
-- **📱 Professional Branding:** (v2.3.0) Native Splash Screens and Adaptive Icon generation for a premium Android presence.
+- **📱 Professional Branding:** (v2.4.0) Native Splash Screens and Adaptive Icon generation for a premium Android presence.
 - **📸 Camera & Media:** Built-in hardware intents for capturing photos and videos.
 - **📂 High-Speed File Picker:** Native file resolution that returns absolute paths for zero-copy file processing.
 - **🛰️ GPS & Location:** First-class support for location-aware applications.

@@ -41,6 +41,7 @@ pywebapp dev
 **Choose your target:**
 - **[d] Desktop**: Launches a native Window on your PC with full Hot-Reload.
 - **[a] Android**: Performs a clean build, installs the APK, and sets up the live sync tunnel to your phone/emulator.
+- **[w] Web**: Launches a browser-based development environment with a live Python API.
 
 Now you can:
 - **Edit React files** → changes appear instantly (Vite HMR).

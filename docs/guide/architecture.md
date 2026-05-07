@@ -137,12 +137,12 @@ sequenceDiagram
 
 **Key point:** Python runs on a **background thread** (thread pool of 4) to avoid blocking the Android UI thread. Results are posted back via `evaluateJavascript()`.
 
-## Concurrency & Threading (v2.3.0)
+## Concurrency & Threading (v2.4.0)
 
 PyWebApp is designed for high-concurrency environments where multiple JavaScript components might call Python simultaneously.
 
 ### Thread-Safe Registry
-As of v2.3.0, the core `MethodRegistry` is protected by a **Recursive Lock (RLock)**. This ensures that:
+As of v2.4.0, the core `MethodRegistry` and `discovery` engine are protected by **Recursive Locking**. This ensures that:
 - Middleware and Handlers are executed atomically.
 - Global state modifications are protected from race conditions.
 - Simultaneous JS calls are queued and handled safely by the Python interpreter.
@@ -150,9 +150,9 @@ As of v2.3.0, the core `MethodRegistry` is protected by a **Recursive Lock (RLoc
 ### Android Thread Pool
 On Android, Python calls do not block the UI. The `PythonBridge` uses a **Fixed Thread Pool (4 workers)**. This allows background Python tasks (like AI inference or file I/O) to run in parallel without freezing the user interface.
 
-## Synchronization (1:1 Mirroring)
+## Synchronization (1:1 Mirroring) (v2.4.0)
 
-The v2.3.0 sync engine uses a **High-Fidelity Mirroring** strategy:
+The v2.4.0 sync engine uses a **High-Fidelity Mirroring** strategy:
 
 1. **Structural Integrity**: Your `backend/` folder is mirrored exactly 1:1 to the native host (`dist/` on Desktop or `src/main/python/` on Android).
 2. **Native Imports**: No magic import rewrites. Standard relative and absolute Python imports work exactly as they do in a standard Python environment.

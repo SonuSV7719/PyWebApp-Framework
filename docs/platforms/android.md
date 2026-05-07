@@ -9,7 +9,7 @@ PyWebApp-Native provides a zero-friction experience for deploying Python/React a
 - **Android SDK 34+**
 - **Python 3.8+** on your development machine
 
-## Professional Branding (New in v2.3.0)
+## Professional Branding (New in v2.4.0)
 
 Branding is now managed centrally via `pywebapp.json`. The framework handles the complex Android resource generation for you.
 
@@ -18,16 +18,19 @@ Add an `android` block to your `pywebapp.json` to customize the mobile experienc
 
 ```json
 {
+  "app_name": "My Amazing App",
+  "app_id": "com.company.myapp",
+  "icon_path": "assets/logo.png",
   "android": {
-    "app_name": "My Pro App",
-    "icon_path": "assets/logo.png",
+    "app_name": "My App Mobile",
+    "icon_path": "assets/mobile-logo.png",
     "splash_image": "assets/splash.png"
   }
 }
 ```
 
 ### 2. Splash Screens
-PyWebApp v2.3.0 features a native splash screen system that hides Python's "warm-up" time.
+PyWebApp v2.4.0 features a native splash screen system that hides Python's "warm-up" time.
 - **Auto-Generation**: Place your logo in the `assets/` folder and point to it in `pywebapp.json`.
 - **Dismissal Control**: You can precisely control when the splash screen disappears:
     - **Python**: `from pywebapp.core import hide_splash; hide_splash()`
@@ -59,7 +62,7 @@ pywebapp build-android --debug --clean --install
 ## Production & Release
 
 ### 1. Keystore Signing & Release
-In v2.3.0, the release pipeline is fully automated and secured. Use the dedicated release command:
+In v2.4.0, the release pipeline is fully automated and secured. Use the dedicated release command:
 
 ```bash
 # Generate a cryptographically secure, release-ready AAB/APK
@@ -70,7 +73,7 @@ The framework uses a CSPRNG (`secrets`) to generate passwords and automatically 
 ### 2. ABI Optimization
 By default, the framework builds for `arm64-v8a` (modern phones) and `x86_64` (emulators). To reduce APK size, adjust the `abiFilters` in `android/app/build.gradle.kts`.
 
-## How it Works (v2.3.0)
+## How it Works (v2.4.0)
 
 1.  **Enterprise Security**: The Kotlin bridge natively sanitizes all incoming IPC calls to strictly prevent XSS and JSON injection vectors.
 2.  **Thread-Safe Registry**: The framework uses a thread-safe registry with 30-second timeouts to handle concurrent calls without thread pool starvation.

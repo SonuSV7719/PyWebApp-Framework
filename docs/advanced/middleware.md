@@ -81,9 +81,9 @@ If a pre-middleware raises an exception, the handler is **not called** and the e
 
 ---
 
-## 🔒 Thread Safety (New in v2.3.0)
+## 🔒 Thread Safety (New in v2.4.0)
 
-In v2.3.0, the `MethodRegistry` was hardened for high-concurrency environments (like multi-threaded Android apps). 
+In v2.4.0, the `MethodRegistry` and its discovery engine were hardened for high-concurrency environments (like multi-threaded Android apps). 
 
 ### Atomic Execution
 The entire execution pipeline is protected by a **Recursive Lock (RLock)**:
